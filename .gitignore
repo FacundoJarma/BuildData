@@ -57,3 +57,11 @@ bun-debug.log*
 *.pem
 .vercel
 coverage/
+
+# ————————————————————————
+# WhatsApp Bot
+# ————————————————————————
+apps/whatsapp-bot/session/
+apps/whatsapp-bot/session.json
+apps/whatsapp-bot/.wwebjs_auth/
+apps/whatsapp-bot/.wwebjs_cache/
