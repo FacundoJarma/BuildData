@@ -14,5 +14,8 @@
   },
   "devDependencies": {
     "turbo": "latest"
+  },
+  "dependencies": {
+    "groq-sdk": "^1.1.2"
   }
 }
