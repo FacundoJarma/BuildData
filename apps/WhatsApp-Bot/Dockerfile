@@ -45,7 +45,7 @@ RUN apt-get update && apt-get install -y \
   --no-install-recommends \
   && rm -rf /var/lib/apt/lists/*
 
-COPY apps/WhatsApp-Bot/package.json apps/WhatsApp-Bot/bun.lockb ./
+COPY apps/WhatsApp-Bot/package.json apps/WhatsApp-Bot/bun.lock ./
 RUN bun install
 RUN bunx puppeteer browsers install chrome@146.0.7680.31 --path ./puppeteer_data
 
