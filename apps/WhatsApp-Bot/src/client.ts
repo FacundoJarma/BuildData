@@ -9,7 +9,7 @@ export const client = new Client({
   }),
   puppeteer: {
     executablePath: isProduction
-      ? "/opt/render/.cache/puppeteer/chrome/linux-146.0.7680.31/chrome-linux64/chrome"
+      ? "./puppeteer_data/chrome/linux-146.0.7680.31/chrome-linux64/chrome"
       : undefined,
     headless: true,
     args: isProduction
