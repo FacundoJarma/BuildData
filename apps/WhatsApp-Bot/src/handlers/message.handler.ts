@@ -8,11 +8,7 @@ import {
 } from "../commands/confirmAndCancel.command";
 import { handleFreeText } from "./freetext.handler";
 import { handleAudio } from "./voice.handler";
-import {
-  getPending,
-  clearPending,
-  hasPending,
-} from "../handlers/pendingQuery.store";
+import { clearPending, hasPending } from "../handlers/pendingQuery.store";
 
 registerCommand(ayudaCommand);
 registerCommand(confirmCommand);
@@ -54,7 +50,9 @@ async function handleTextMessage(
     if (!command) {
       if (hasPending(phone)) {
         clearPending(phone);
-        await message.reply("❌ Carga de datos cancelada por comando no reconocido.");
+        await message.reply(
+          "❌ Carga de datos cancelada por comando no reconocido. Escribí *!ayuda* para ver los disponibles",
+        );
         return;
       }
       await message.reply(
@@ -64,11 +62,6 @@ async function handleTextMessage(
     }
     await command.execute(message);
   } else {
-    if (hasPending(phone)) {
-      clearPending(phone);
-      await message.reply("❌ Carga de datos previa cancelada automaticamente.");
-    }
-
     await handleFreeText(phone, message);
   }
 }

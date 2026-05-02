@@ -10,8 +10,6 @@ export async function handleAudio(phone: string, message: Message): Promise<void
     return;
   }
 
-  await message.reply("🎙️ Transcribiendo tu audio...");
-
   const transcripcion = await transcribeAudio(media.data, media.mimetype);
 
   if (!transcripcion) {
