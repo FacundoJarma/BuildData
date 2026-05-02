@@ -2,7 +2,6 @@ FROM oven/bun:1.3.12
 
 WORKDIR /app
 
-# Instalar dependencias del sistema para Chrome
 RUN apt-get update && apt-get install -y \
   ca-certificates \
   fonts-liberation \
@@ -45,11 +44,11 @@ RUN apt-get update && apt-get install -y \
   xdg-utils \
   --no-install-recommends \
   && rm -rf /var/lib/apt/lists/*
-  
-COPY package.json bun.lockb ./
+
+COPY apps/WhatsApp-Bot/package.json apps/WhatsApp-Bot/bun.lockb ./
 RUN bun install
 RUN bunx puppeteer browsers install chrome@146.0.7680.31 --path ./puppeteer_data
 
-COPY . .
+COPY apps/WhatsApp-Bot/ .
 
 CMD ["bun", "src/index.ts"]
