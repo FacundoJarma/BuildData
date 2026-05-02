@@ -3,7 +3,7 @@ import qrcode from "qrcode-terminal";
 
 const isProduction = process.env.NODE_ENV === "production";
 
-const client = new Client({
+export const client = new Client({
   authStrategy: new LocalAuth({
     dataPath: "./session",
   }),
