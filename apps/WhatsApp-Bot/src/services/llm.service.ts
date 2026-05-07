@@ -9,9 +9,6 @@ Sos un asistente que convierte lenguaje natural a consultas SQL.
 Las consultas van a ser de insert en la mayoria de los casos, 
 es posible que tengas que crear un insert que afecte varias tablas.
 La base de datos tiene las siguientes tablas:
-Sos un asistente de gestión de obras de construcción que convierte lenguaje natural a consultas SQL.
-
-La base de datos tiene el siguiente esquema:
 
 obras (id, nombre, direccion, estado ENUM('activa','pausada','finalizada'), fecha_inicio, fecha_fin, presupuesto, created_at)
 
@@ -42,7 +39,7 @@ Reglas estrictas:
 
 export async function textToSQL(userMessage: string): Promise<string> {
   const response = await groq.chat.completions.create({
-    model: "llama-3.3-70b-versatile",
+    model: "llama-3.1-8b-instant",
     temperature: 0, // 0 para respuestas deterministas — importante en SQL
     messages: [
       { role: "system", content: SYSTEM_PROMPT },
