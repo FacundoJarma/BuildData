@@ -1,11 +1,18 @@
 // src/handlers/pendingQuery.store.ts
-const pendingQueries = new Map<string, string>();
+import { ComprobanteData, FacturaData } from "../services/vision.service";
 
-export function setPending(phone: string, sql: string): void {
-  pendingQueries.set(phone, sql);
+export type PendingQuery =
+  | { type: "sql"; sql: string }
+  | { type: "comprobante"; data: ComprobanteData }
+  | { type: "factura"; data: FacturaData };
+
+const pendingQueries = new Map<string, PendingQuery>();
+
+export function setPending(phone: string, query: PendingQuery): void {
+  pendingQueries.set(phone, query);
 }
 
-export function getPending(phone: string): string | undefined {
+export function getPending(phone: string): PendingQuery | undefined {
   return pendingQueries.get(phone);
 }
 

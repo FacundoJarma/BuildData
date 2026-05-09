@@ -18,7 +18,7 @@ export async function handleFreeText(phone: string, message: Message): Promise<v
       return;
     }
 
-    setPending(phone, sql);
+    setPending(phone, { type: "sql", sql });
 
     await message.reply(`✅ Consulta generada:\n\`\`\`\n${sql}\n\`\`\``);
     await message.reply("¿Entendí correctamente? Respondé *!confirm* para guardar o *!cancel* para cancelar.");

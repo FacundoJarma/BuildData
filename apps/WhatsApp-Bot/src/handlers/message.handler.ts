@@ -9,6 +9,7 @@ import {
 import { handleFreeText } from "./freetext.handler";
 import { handleAudio } from "./voice.handler";
 import { clearPending, hasPending } from "../handlers/pendingQuery.store";
+import { handleImage } from "./image.handler";
 
 registerCommand(ayudaCommand);
 registerCommand(confirmCommand);
@@ -32,6 +33,9 @@ export async function handleMessage(message: Message): Promise<void> {
     case MessageTypes.VOICE:
     case MessageTypes.AUDIO:
       await handleAudio(phone, message);
+      break;
+    case MessageTypes.IMAGE:
+      await handleImage(phone, message);
       break;
     default:
       console.log(`Tipo de mensaje no manejado: ${message.type}`);

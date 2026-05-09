@@ -35,11 +35,12 @@ Reglas estrictas:
 - Nunca generes consultas DELETE, DROP, TRUNCATE ni ALTER
 - Para filtrar por estado usá siempre los valores exactos del ENUM
 - Cuando el usuario mencione "mi obra" o "mi usuario" usá el parámetro :usuario_id
+- Siempre que no sepa responder con una consulta SQL, respondé con ERROR: <motivo>, Nunca respondas con "No comprendo" o cosas del estilo.
 `;
 
 export async function textToSQL(userMessage: string): Promise<string> {
   const response = await groq.chat.completions.create({
-    model: "llama-3.1-8b-instant",
+    model: "llama-3.3-70b-versatile",
     temperature: 0, // 0 para respuestas deterministas — importante en SQL
     messages: [
       { role: "system", content: SYSTEM_PROMPT },
