@@ -1,37 +1,55 @@
 @import "tailwindcss";
 @import "@heroui/styles";
 
-:root {
-  --background: #ffffff;
-  --foreground: #1e293b;
-  --primary: #1d4ed8;
-  --primary-light: #dbeafe;
-  --primary-dark: #1e40af;
-  --sidebar-bg: #f8fafc;
-  --sidebar-border: #e2e8f0;
-  --navbar-border: #e2e8f0;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-primary: var(--primary);
-  --color-primary-light: var(--primary-light);
-  --color-primary-dark: var(--primary-dark);
-  --color-sidebar-bg: var(--sidebar-bg);
-  --font-sans: var(--font-geist-sans);
+  --color-primary: #0F4395;
+  --color-primary-700: #0B3275;
+  --color-primary-50: #EFF4FC;
+  --color-accent: #F59E0B;
+  --color-accent-700: #B45309;
+  --color-accent-50: #FFFBEB;
+  --color-ink: #131B2E;
+  --color-ink-deep: #131B2E;
+  --color-paper: #FCF8FA;
+  --color-critical: #EF4444;
+  --color-success: #22C55E;
+  --color-success-50: #F0FDF4;
+  --font-sans: 'Manrope', ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #ffffff;
-    --foreground: #1e293b;
-  }
+:root {
+  --background: #FCF8FA;
+  --foreground: #0F172A;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  min-height: 100vh;
+}
+
+.brand-panel {
+  background-color: #0F4395;
+  background-image:
+    radial-gradient(1000px 600px at 80% -10%, rgba(245,158,11,0.20), transparent 60%),
+    radial-gradient(700px 500px at -10% 30%, rgba(11,50,117,0.65), transparent 60%),
+    repeating-linear-gradient(0deg, rgba(255,255,255,.05) 0 1px, transparent 1px 36px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,.05) 0 1px, transparent 1px 36px);
+  color: #fff;
+}
+
+@keyframes liveDot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .4; }
+}
+
+.live-dot {
+  animation: liveDot 1.6s infinite;
+}
+
+button:focus-visible, a:focus-visible, input:focus-visible {
+  outline: 2px solid #F59E0B;
+  outline-offset: 2px;
 }

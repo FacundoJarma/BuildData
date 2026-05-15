@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import SideBar from "./sections/SideBar";
-import Navbar from "./sections/Navbar";
 
 const InterFont = Inter({
   subsets: ["latin"],
@@ -21,13 +19,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${InterFont.variable}  h-full antialiased`}>
-      <body className="min-h-screen flex flex-col">
-        <Navbar />
-        <main className="w-full grid grid-cols-10 grow">
-          <SideBar />
-          {children}
-        </main>
-      </body>
+      <body className="min-h-screen flex flex-col">{children}</body>
     </html>
   );
 }
