@@ -64,14 +64,14 @@ export default function LoginBrandPanel() {
         </div>
       </div>
 
-      <div className="mt-auto pt-10 grid grid-cols-3 gap-4 max-w-[440px] relative z-10">
+      {/* <div className="mt-auto pt-10 grid grid-cols-3 gap-4 max-w-[440px] relative z-10">
         {metrics.map((s) => (
           <div key={s.label}>
             <div className="text-[24px] font-extrabold tracking-tight tabular-nums">{s.value}</div>
             <div className="text-[10px] tracking-[0.06em] uppercase text-white/55 font-bold mt-1">{s.label}</div>
           </div>
         ))}
-      </div>
+      </div> */}
     </div>
   );
 }
