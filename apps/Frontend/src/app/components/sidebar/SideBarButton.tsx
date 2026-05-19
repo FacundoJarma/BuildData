@@ -1,4 +1,4 @@
-function SideBarButton({ text, handleClick }: { text: string, handleClick: () => void }) {
+function SideBarButton({ text, handleClick }: { text: string; handleClick?: () => void }) {
   return (
     <button 
     onClick={handleClick}

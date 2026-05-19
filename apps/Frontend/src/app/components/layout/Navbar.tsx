@@ -1,4 +1,4 @@
-import LogoIcon from "../components/LogoIcon";
+import LogoIcon from "../ui/LogoIcon";
 
 interface NavbarProps {
   type: "no-session" | "session";

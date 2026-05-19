@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { ArrowRight, CircleCheck, Envelope } from "@gravity-ui/icons";
-import FormInput from "./FormInput";
-import Button from "./Button";
+import FormInput from "../ui/FormInput";
+import Button from "../ui/Button";
 
 interface SignInFormProps {
   showSocial: boolean;
@@ -103,18 +103,6 @@ export default function SignInForm({ showSocial, onSwitch }: SignInFormProps) {
               </button>
             }
           />
-
-          {/*
-          
-          <label className="flex items-center gap-2 text-[12px] text-slate-700 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={remember}
-              onChange={(e) => setRemember(e.target.checked)}
-              className="w-4 h-4 rounded border-slate-300 accent-primary"
-            />
-            Mantenerme conectado en este dispositivo
-          </label> */}
 
           <Button href="/dashboard" className="w-full mt-2">
             Iniciar sesión <ArrowRight className="w-[14px] h-[14px]" />

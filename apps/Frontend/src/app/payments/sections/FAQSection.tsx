@@ -1,0 +1,28 @@
+import FAQ from "../../components/shared/FAQ";
+import { faqItems } from "../data/plans";
+
+export default function FAQSection() {
+  return (
+    <section className="max-w-[860px] mx-auto px-6 py-20">
+      <div className="text-center mb-10">
+        <div className="text-[10px] tracking-[0.18em] uppercase font-bold text-primary mb-2">
+          Preguntas frecuentes
+        </div>
+        <h2 className="text-[28px] font-extrabold display-tight">
+          Lo que más nos preguntan
+        </h2>
+      </div>
+      <FAQ items={faqItems} />
+      <div className="text-center mt-6 text-[13px] text-slate500">
+        ¿Otra duda? Escribinos a{" "}
+        <a
+          href="mailto:hola@buildata.app"
+          className="text-primary font-bold hover:underline"
+        >
+          hola@buildata.app
+        </a>
+        .
+      </div>
+    </section>
+  );
+}

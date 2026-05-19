@@ -1,12 +1,7 @@
-"use client";
-
-import { useState } from "react";
-
-export default function PricingToggle() {
-  const [active, setActive] = useState<"mensual" | "anual">("anual");
+export default function PricingToggle( {setActive, active} : { setActive: (active: "mensual" | "anual") => void, active: "mensual" | "anual" }) {
 
   return (
-    <div className="inline-flex items-center gap-3 mt-9 bg-white border border-slate200 rounded-full p-[3px] shadow-card">
+    <div className="mx-auto w-fit mb-10 flex items-center gap-3 mt-9 bg-white border border-slate200 rounded-full p-[3px] shadow-card">
       <button
         onClick={() => setActive("mensual")}
         className={`text-[12px] font-bold px-5 py-[8px] rounded-full transition-colors ${

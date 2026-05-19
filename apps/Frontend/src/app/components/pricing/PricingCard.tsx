@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, Xmark, ArrowRight } from "@gravity-ui/icons";
-import Button from "./Button";
+import Button from "../ui/Button";
 
 interface Feature {
   text: string;
@@ -50,7 +50,10 @@ export default function PricingCard({
         </div>
       )}
 
-      <div className="text-[12px] font-bold tracking-[0.06em] uppercase mb-1" style={{ color: labelColor }}>
+      <div
+        className="text-[12px] font-bold tracking-[0.06em] uppercase mb-1"
+        style={{ color: labelColor }}
+      >
         {planLabel}
       </div>
 
@@ -60,17 +63,26 @@ export default function PricingCard({
 
       <div className="mt-6 mb-2">
         <div className="flex items-baseline gap-2">
-          <span className={`text-[44px] font-extrabold display-tight tnum ${isFeatured ? "text-white" : "text-slate950"}`}>
+          <span
+            className={`text-[44px] font-extrabold display-tight tnum ${isFeatured ? "text-white" : "text-slate950"}`}
+          >
             {price}
           </span>
         </div>
-        <div className={`text-[12px] ${isFeatured ? "text-white/65" : "text-slate500"}`}>
+        <div
+          className={`text-[12px] ${isFeatured ? "text-white/65" : "text-slate500"}`}
+        >
           {priceSub}
         </div>
       </div>
 
-      <div className={`text-[12px] mt-2 leading-snug min-h-[36px] ${isFeatured ? "text-white/65" : "text-slate500"}`}>
-        <b className={isFeatured ? "text-white" : "text-slate700"}>Ideal para:</b> {idealFor}
+      <div
+        className={`text-[12px] mt-2 leading-snug min-h-[36px] ${isFeatured ? "text-white/65" : "text-slate500"}`}
+      >
+        <b className={isFeatured ? "text-white" : "text-slate700"}>
+          Ideal para:
+        </b>{" "}
+        {idealFor}
       </div>
 
       <Button
@@ -85,7 +97,9 @@ export default function PricingCard({
         {ctaText} <ArrowRight width={14} height={14} />
       </Button>
 
-      <div className={`text-[10px] tracking-[0.06em] uppercase font-bold mt-7 mb-3 ${isFeatured ? "text-white/65" : "text-slate500"}`}>
+      <div
+        className={`text-[10px] tracking-[0.06em] uppercase font-bold mt-7 mb-3 ${isFeatured ? "text-white/65" : "text-slate500"}`}
+      >
         Incluye
       </div>
 
@@ -95,7 +109,9 @@ export default function PricingCard({
             {feature.included ? (
               <span
                 className={`w-[18px] h-[18px] rounded-full flex items-center justify-center flex-none mt-[1px] ${
-                  isFeatured ? "bg-accent text-slate950" : "bg-success50 text-[#15803D]"
+                  isFeatured
+                    ? "bg-accent text-slate950"
+                    : "bg-success50 text-[#15803D]"
                 }`}
               >
                 <Check width={11} height={11} />

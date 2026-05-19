@@ -1,6 +1,6 @@
-import SideBarButton from "../components/SideBarButton";
-import SideBarSeccion from "../components/SideBarSeccion";
-import SideBarBuildName from "../components/SideBarBuildName";
+import SideBarButton from "./SideBarButton";
+import SideBarSeccion from "./SideBarSeccion";
+import SideBarBuildName from "./SideBarBuildName";
 import {
   Bell,
   BellFill,

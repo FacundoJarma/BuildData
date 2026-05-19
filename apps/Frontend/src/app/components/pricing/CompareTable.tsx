@@ -6,7 +6,7 @@ interface CompareCategory {
   name: string;
   features: {
     name: string;
-    values: [CellValue, CellValue, CellValue];
+    values: CellValue[];
   }[];
 }
 

@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { ArrowRight, CircleCheck, Envelope } from "@gravity-ui/icons";
-import FormInput from "./FormInput";
-import Button from "./Button";
+import FormInput from "../ui/FormInput";
+import Button from "../ui/Button";
 
 interface SignUpFormProps {
   showSocial: boolean;
@@ -16,7 +16,9 @@ export default function SignUpForm({ showSocial, onSwitch }: SignUpFormProps) {
   return (
     <div className="flex flex-col p-8 lg:p-12 overflow-y-auto">
       <div className="flex justify-end gap-4 text-[12px] text-slate-500">
-        <a href="/" className="hover:text-primary font-semibold">← Volver al sitio</a>
+        <a href="/" className="hover:text-primary font-semibold">
+          ← Volver al sitio
+        </a>
       </div>
 
       <div className="m-auto w-full max-w-[400px] py-10">
@@ -35,10 +37,22 @@ export default function SignUpForm({ showSocial, onSwitch }: SignUpFormProps) {
             <div className="flex gap-2 mt-7 w-full">
               <Button variant="outline" className="w-full">
                 <svg width="16" height="16" viewBox="0 0 24 24">
-                  <path d="M22.5 12.27c0-.79-.07-1.55-.2-2.27H12v4.3h5.9a5.05 5.05 0 0 1-2.19 3.31v2.75h3.54c2.07-1.91 3.25-4.72 3.25-8.09z" fill="#4285F4" />
-                  <path d="M12 23c2.95 0 5.42-.98 7.23-2.64l-3.54-2.75c-.98.66-2.23 1.05-3.69 1.05-2.84 0-5.25-1.92-6.11-4.5H2.23v2.83A11 11 0 0 0 12 23z" fill="#34A853" />
-                  <path d="M5.89 14.17a6.6 6.6 0 0 1 0-4.34V7H2.23a11 11 0 0 0 0 9.9l3.66-2.83z" fill="#FBBC04" />
-                  <path d="M12 5.38c1.6 0 3.04.55 4.17 1.62l3.13-3.13C17.42 2.09 14.95 1 12 1 7.7 1 4 3.48 2.23 7l3.66 2.83C6.75 7.3 9.16 5.38 12 5.38z" fill="#EA4335" />
+                  <path
+                    d="M22.5 12.27c0-.79-.07-1.55-.2-2.27H12v4.3h5.9a5.05 5.05 0 0 1-2.19 3.31v2.75h3.54c2.07-1.91 3.25-4.72 3.25-8.09z"
+                    fill="#4285F4"
+                  />
+                  <path
+                    d="M12 23c2.95 0 5.42-.98 7.23-2.64l-3.54-2.75c-.98.66-2.23 1.05-3.69 1.05-2.84 0-5.25-1.92-6.11-4.5H2.23v2.83A11 11 0 0 0 12 23z"
+                    fill="#34A853"
+                  />
+                  <path
+                    d="M5.89 14.17a6.6 6.6 0 0 1 0-4.34V7H2.23a11 11 0 0 0 0 9.9l3.66-2.83z"
+                    fill="#FBBC04"
+                  />
+                  <path
+                    d="M12 5.38c1.6 0 3.04.55 4.17 1.62l3.13-3.13C17.42 2.09 14.95 1 12 1 7.7 1 4 3.48 2.23 7l3.66 2.83C6.75 7.3 9.16 5.38 12 5.38z"
+                    fill="#EA4335"
+                  />
                 </svg>
                 Google
               </Button>
@@ -51,7 +65,9 @@ export default function SignUpForm({ showSocial, onSwitch }: SignUpFormProps) {
             </div>
             <div className="flex items-center gap-3 my-6">
               <div className="flex-1 h-px bg-slate-200" />
-              <span className="text-[10px] tracking-[0.08em] uppercase font-bold text-slate-500">o con email</span>
+              <span className="text-[10px] tracking-[0.08em] uppercase font-bold text-slate-500">
+                o con email
+              </span>
               <div className="flex-1 h-px bg-slate-200" />
             </div>
           </>
@@ -76,15 +92,32 @@ export default function SignUpForm({ showSocial, onSwitch }: SignUpFormProps) {
             placeholder="••••••••••"
             hint="Mínimo 10 caracteres, con mayúscula y número."
             rightElement={
-              <button onClick={() => setShowPw(!showPw)} className="focus:outline-none">
+              <button
+                onClick={() => setShowPw(!showPw)}
+                className="focus:outline-none"
+              >
                 {showPw ? "Ocultar" : "Mostrar"}
               </button>
             }
           />
 
           <label className="flex items-start gap-2 text-[12px] text-slate-700 cursor-pointer">
-            <input type="checkbox" defaultChecked className="w-4 h-4 mt-[2px] rounded border-slate-300 accent-primary" />
-            <span>Acepto los <a href="#" className="text-primary font-bold hover:underline">términos de servicio</a> y la <a href="#" className="text-primary font-bold hover:underline">política de privacidad</a>.</span>
+            <input
+              type="checkbox"
+              defaultChecked
+              className="w-4 h-4 mt-[2px] rounded border-slate-300 accent-primary"
+            />
+            <span>
+              Acepto los{" "}
+              <a href="#" className="text-primary font-bold hover:underline">
+                términos de servicio
+              </a>{" "}
+              y la{" "}
+              <a href="#" className="text-primary font-bold hover:underline">
+                política de privacidad
+              </a>
+              .
+            </span>
           </label>
 
           <Button href="/dashboard" className="w-full mt-2">
@@ -93,12 +126,25 @@ export default function SignUpForm({ showSocial, onSwitch }: SignUpFormProps) {
         </div>
 
         <div className="text-center mt-6 text-[12px] text-slate-500">
-          ¿Ya tenés cuenta? <button onClick={onSwitch} className="text-primary font-bold hover:underline">Iniciar sesión</button>
+          ¿Ya tenés cuenta?{" "}
+          <button
+            onClick={onSwitch}
+            className="text-primary font-bold hover:underline"
+          >
+            Iniciar sesión
+          </button>
         </div>
       </div>
 
       <div className="text-center text-[11px] text-slate-400 mt-4">
-        © 2026 BuildData · <a href="#" className="hover:text-slate-600">Soporte</a> · <a href="#" className="hover:text-slate-600">Estado del sistema</a>
+        © 2026 BuildData ·{" "}
+        <a href="#" className="hover:text-slate-600">
+          Soporte
+        </a>{" "}
+        ·{" "}
+        <a href="#" className="hover:text-slate-600">
+          Estado del sistema
+        </a>
       </div>
     </div>
   );
