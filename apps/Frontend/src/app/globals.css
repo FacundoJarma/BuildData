@@ -1,5 +1,10 @@
 @import "tailwindcss";
-@import "@heroui/styles";
+
+@layer base {
+  *, ::after, ::before {
+    border-color: var(--color-slate-200);
+  }
+}
 
 @theme inline {
   --color-primary: #0F4395;

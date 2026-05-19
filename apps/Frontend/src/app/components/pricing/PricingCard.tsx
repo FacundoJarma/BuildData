@@ -21,6 +21,7 @@ interface PricingCardProps {
   ctaText: string;
   ctaHref: string;
   badge?: string;
+  facturation?: "mensual" | "anual";
 }
 
 export default function PricingCard({
