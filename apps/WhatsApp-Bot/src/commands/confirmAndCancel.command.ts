@@ -1,7 +1,7 @@
-// src/commands/confirmAndCancel.command.ts
 import { Command } from "./index";
 import { getPending, clearPending, hasPending } from "../handlers/pendingQuery.store";
 import { ComprobanteData, FacturaData } from "../services/vision.service";
+import { MSG } from "../shared/responses";
 
 export const confirmCommand: Command = {
   name: "!confirm",
@@ -11,16 +11,16 @@ export const confirmCommand: Command = {
     const pending = getPending(phone);
 
     if (!pending) {
-      await message.reply("⚠️ No hay ninguna carga de datos pendiente.");
+      await message.reply(MSG.ERROR_NO_PENDING);
       return;
     }
 
     clearPending(phone);
 
     switch (pending.type) {
-      case "sql":
-        console.log(`Ejecutando SQL: ${pending.sql}`);
-        // await sendToDb(pending.sql);
+      case "operation":
+        console.log(`Operación: ${JSON.stringify(pending.operation)}`);
+        // TODO: resolveAndExecute(pending.operation);
         break;
       case "comprobante":
         console.log(`Comprobante: ${JSON.stringify(pending.data)}`);
@@ -30,7 +30,7 @@ export const confirmCommand: Command = {
         break;
     }
 
-    await message.reply("✅ Datos guardados correctamente.");
+    await message.reply(MSG.SUCCESS_DATA_SAVED);
   },
 };
 
@@ -41,11 +41,12 @@ export const cancelCommand: Command = {
     const phone = (await message.getContact()).number;
 
     if (!hasPending(phone)) {
-      await message.reply("⚠️ No hay ninguna carga de datos pendiente.");
+      await message.reply(MSG.ERROR_NO_PENDING);
       return;
     }
 
     clearPending(phone);
-    await message.reply("❌ Carga de datos cancelada.");
+    await message.reply(MSG.SUCCESS_DATA_CANCELLED);
   },
 };
+

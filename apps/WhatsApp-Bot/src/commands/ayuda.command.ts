@@ -1,5 +1,4 @@
-import { Command } from "./index";
-import { getAllCommands } from "./index";
+import { Command, getAllCommands } from "./index";
 
 export const ayudaCommand: Command = {
   name: "!ayuda",

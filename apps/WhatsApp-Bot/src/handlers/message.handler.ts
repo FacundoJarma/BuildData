@@ -1,4 +1,3 @@
-// src/handlers/message.handler.ts
 import { Message, MessageTypes } from "whatsapp-web.js";
 import { getCommand, registerCommand } from "../commands/index";
 import { ayudaCommand } from "../commands/ayuda.command";
@@ -10,6 +9,7 @@ import { handleFreeText } from "./freetext.handler";
 import { handleAudio } from "./voice.handler";
 import { clearPending, hasPending } from "../handlers/pendingQuery.store";
 import { handleImage } from "./image.handler";
+import { MSG } from "../shared/responses";
 
 registerCommand(ayudaCommand);
 registerCommand(confirmCommand);
@@ -54,14 +54,10 @@ async function handleTextMessage(
     if (!command) {
       if (hasPending(phone)) {
         clearPending(phone);
-        await message.reply(
-          "❌ Carga de datos cancelada por comando no reconocido. Escribí *!ayuda* para ver los disponibles",
-        );
+        await message.reply(MSG.ERROR_CANCELLED_BAD_CMD);
         return;
       }
-      await message.reply(
-        "Comando no reconocido. Escribí *!ayuda* para ver los disponibles.",
-      );
+      await message.reply(MSG.ERROR_UNKNOWN_COMMAND);
       return;
     }
     await command.execute(message);
