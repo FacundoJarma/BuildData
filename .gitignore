@@ -61,7 +61,7 @@ coverage/
 # ————————————————————————
 # WhatsApp Bot
 # ————————————————————————
-apps/whatsapp-bot/session/
-apps/whatsapp-bot/session.json
-apps/whatsapp-bot/.wwebjs_auth/
-apps/whatsapp-bot/.wwebjs_cache/
+apps/WhatsApp-Bot/session/
+apps/WhatsApp-Bot/session.json
+apps/WhatsApp-Bot/.wwebjs_auth/
+apps/WhatsApp-Bot/.wwebjs_cache/

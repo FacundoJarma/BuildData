@@ -14,7 +14,7 @@ Formato:
   "table": "nombre_tabla",
   "data": { "campo": valor, ... },
   "where": { "campo": valor, ... },   // SOLO para update
-  "comment": "explicación corta en español"
+  "comment": "explicación en español acerca de la operacion que vas a ejecutar"
 }
 
 Tablas y campos:
@@ -35,6 +35,7 @@ Reglas:
 - Los valores ENUM van en minúscula: activa, pendiente, media, material, etc.
 - Nunca uses action "delete"
 - Si no podés generar la operación, responded: {"error": "explicación del motivo"}
+- El comment debe indicar de forma clara pero nada tecnica lo que vas a hacer. Por ejemplo "Voy a cargar el cambio de stock de ladrillos".
 `;
 
 export async function textToOperation(userMessage: string): Promise<string> {

@@ -1,6 +1,5 @@
 import { Command } from "./index";
 import { getPending, clearPending, hasPending } from "../handlers/pendingQuery.store";
-import { ComprobanteData, FacturaData } from "../services/vision.service";
 import { MSG } from "../shared/responses";
 
 export const confirmCommand: Command = {

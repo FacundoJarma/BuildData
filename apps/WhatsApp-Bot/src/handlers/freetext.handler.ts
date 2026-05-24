@@ -33,8 +33,7 @@ export async function handleFreeText(phone: string, message: Message): Promise<v
 
     setPending(phone, { type: "operation", operation: parsed });
 
-    await message.reply(MSG_OPERATION_GENERATED(JSON.stringify(parsed, null, 2)));
-    await message.reply(MSG.PROMPT_CONFIRM);
+    await message.reply("Ok!" + parsed.comment + "\n\n" + MSG.PROMPT_CONFIRM);
 
   } catch (error) {
     console.error("Error al procesar texto:", error);
