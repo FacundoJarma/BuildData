@@ -17,6 +17,11 @@
   --color-ink-deep: #131B2E;
   --color-paper: #FCF8FA;
   --color-critical: #EF4444;
+  --color-critical-50: #FEF2F2;
+  --color-attention: #FACC15;
+  --color-attention-50: #FFFBEB;
+  --color-info: #3B82F6;
+  --color-info-50: #EFF6FF;
   --color-success: #22C55E;
   --color-success-50: #F0FDF4;
   --font-sans: 'Manrope', ui-sans-serif, system-ui, sans-serif;
