@@ -7,7 +7,7 @@ export async function getAlertas(req, res) {
     const result = await pool.query(
       `SELECT a.*, u.nombre as destinatario
        FROM alertas a
-       LEFT JOIN usuarios u ON a.usuario_id = u.id
+       LEFT JOIN perfiles u ON a.usuario_id = u.id
        WHERE a.obra_id = $1 AND a.resuelta = false
        ORDER BY a.created_at DESC`,
       [obra_id]

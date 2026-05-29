@@ -7,7 +7,7 @@ export async function getTareas(req, res) {
     const tareas = await pool.query(
       `SELECT t.*, u.nombre as asignado_nombre
        FROM tareas t
-       LEFT JOIN usuarios u ON t.asignado_a = u.id
+       LEFT JOIN perfiles u ON t.asignado_a = u.id
        WHERE t.obra_id = $1
        ORDER BY t.fecha_inicio ASC`,
       [obra_id]
@@ -19,7 +19,7 @@ export async function getTareas(req, res) {
         const subtareas = await pool.query(
           `SELECT s.*, u.nombre as usuario_nombre
            FROM subtareas s
-           LEFT JOIN usuarios u ON s.usuario_id = u.id
+           LEFT JOIN perfiles u ON s.usuario_id = u.id
            WHERE s.tarea_id = $1
            ORDER BY s.fecha ASC`,
           [tarea.id]

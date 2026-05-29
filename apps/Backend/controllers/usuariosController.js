@@ -5,10 +5,10 @@ export async function getEquipo(req, res) {
   const { obra_id } = req.params;
   try {
     const result = await pool.query(
-      `SELECT u.id, u.nombre, u.email, u.telefono, uo.cargo, uo.joined_at
-       FROM usuarios u
-       JOIN usuarios_obras uo ON u.id = uo.usuario_id
-       WHERE uo.obra_id = $1`,
+      `SELECT p.id, p.nombre, p.telefono, uo.cargo, uo.joined_at
+        FROM perfiles p
+        JOIN usuarios_obras uo ON p.id = uo.usuario_id
+        WHERE uo.obra_id = $1`,
       [obra_id]
     );
 

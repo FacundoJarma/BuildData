@@ -1,27 +1,35 @@
 import express from "express";
 import dotenv from "dotenv";
 
+import authRoutes from "./routes/auth.js";
 import dashboardRoutes from "./routes/dashboard.js";
 import tareasRoutes from "./routes/tareas.js";
 import usuariosRoutes from "./routes/usuarios.js";
 import reportesRoutes from "./routes/reportes.js";
 import alertasRoutes from "./routes/alertas.js";
 import botRoutes from "./routes/bot.js";
+import { authMiddleware } from "./middleware/authMiddleware.js";
 
 dotenv.config();
 
 const app = express();
 app.use(express.json());
 
-// Rutas principales
-app.use("/dashboard", dashboardRoutes);
-app.use("/tareas", tareasRoutes);
-app.use("/usuarios", usuariosRoutes);
-app.use("/reportes", reportesRoutes);
-app.use("/alertas", alertasRoutes);
+// Auth — pública (no necesita token)
+app.use("/auth", authRoutes);
 
-// Endpoints para el bot de Facu
+// Bot — pública pero usa service_role internamente
 app.use("/bot", botRoutes);
+
+// Todo lo demás — requiere estar logueado
+app.use("/dashboard", authMiddleware, dashboardRoutes);
+app.use("/tareas", authMiddleware, tareasRoutes);
+app.use("/usuarios", authMiddleware, usuariosRoutes);
+app.use("/reportes", authMiddleware, reportesRoutes);
+app.use("/alertas", authMiddleware, alertasRoutes);
+
+import obrasRoutes from "./routes/obras.js";
+app.use("/obras", authMiddleware, obrasRoutes);
 
 app.get("/", (req, res) => {
   res.send("BuildData API funcionando");
