@@ -9,7 +9,8 @@ export default function DashboardPage() {
   return (
     <>
       {isEmpty ? <EmptyDashboardContent /> : <DashboardContent />}
-      {!isEmpty && <ChatBubble />}
+      
+      {/* {!isEmpty && <ChatBubble />} */}
     </>
   );
 }

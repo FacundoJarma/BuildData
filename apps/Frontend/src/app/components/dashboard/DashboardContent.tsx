@@ -14,6 +14,8 @@ import { DCard } from "./DCard";
 import { DPill } from "./DPill";
 import { DAvatar } from "./DAvatar";
 import Button from "@/app/components/ui/Button";
+import ProgressByTradeCards from "./ProgressByTradeCards";
+import CriticalAlertsCard from "./CriticalAlertsCard";
 
 export function DashboardContent() {
   return (
@@ -76,87 +78,10 @@ export function DashboardContent() {
       {/* Progress + Criticals */}
       <div className="grid grid-cols-[2fr_1fr] gap-3 mb-4">
         {/* Progress by trade */}
-        <DCard padding="p-0">
-          <div className="px-5 py-3 border-b border-slate-200 flex items-center justify-between">
-            <div>
-              <div className="text-[14px] font-bold text-slate-950">Avance por rubro</div>
-              <div className="text-[11px] text-slate-500 mt-[1px]">
-                Porcentaje completado de cada tarea
-              </div>
-            </div>
-            <div className="flex bg-slate-100 rounded-md p-[2px] gap-[2px]">
-              {["Semana", "Mes", "Total"].map((s, i) => (
-                <span
-                  key={s}
-                  className={`text-[11px] font-bold px-[10px] py-[5px] rounded ${i === 2 ? "bg-white text-slate-950 shadow-card" : "text-slate-600"}`}
-                >
-                  {s}
-                </span>
-              ))}
-            </div>
-          </div>
-          <div className="p-5 space-y-3">
-            {[
-              { name: "Mampostería",           pct: 88, tone: "#22C55E" },
-              { name: "Hormigón armado",       pct: 62, tone: "#0F4395" },
-              { name: "Instalaciones eléctricas", pct: 46, tone: "#3B82F6" },
-              { name: "Instalaciones sanitarias", pct: 58, tone: "#3B82F6" },
-              { name: "Terminaciones",         pct: 24, tone: "#F59E0B" },
-              { name: "Carpintería",           pct: 12, tone: "#94A3B8" },
-            ].map((r) => (
-              <div
-                key={r.name}
-                className="grid grid-cols-[160px_1fr_44px] gap-3 items-center"
-              >
-                <div className="text-[12px] font-semibold text-slate-800">
-                  {r.name}
-                </div>
-                <div className="bg-slate-100 h-[8px] rounded-full overflow-hidden">
-                  <div
-                    style={{ width: `${r.pct}%`, background: r.tone }}
-                    className="h-full rounded-full"
-                  />
-                </div>
-                <div className="text-[12px] font-bold text-right tnum">{r.pct}%</div>
-              </div>
-            ))}
-          </div>
-        </DCard>
+        <ProgressByTradeCards />
 
         {/* Critical alerts */}
-        <DCard padding="p-0">
-          <div className="px-5 py-3 border-b border-slate-200 flex items-center justify-between">
-            <div className="text-[14px] font-bold">Críticos activos</div>
-            <DPill tone="criticalSolid">2</DPill>
-          </div>
-          <div className="divide-y divide-slate-200">
-            {[
-              { title: "Falla en Grúa Torre 2", sub: "Sector C · J. Méndez", time: "12 min", tone: "critical" as const },
-              { title: "Faltante: hierro 12 mm", sub: "Pedido sin aprobar", time: "2 h", tone: "critical" as const },
-              { title: "Demora en hormigón",    sub: "Sector B · 3 días",  time: "ayer", tone: "attention" as const },
-            ].map((a, i) => (
-              <div key={i} className="px-4 py-3 flex items-start gap-3">
-                <div
-                  className={`w-8 h-8 rounded-md flex items-center justify-center flex-none
-                    ${a.tone === "critical" ? "bg-critical-50 text-[#B91C1C]" : "bg-attention-50 text-[#A16207]"}`}
-                >
-                  <CircleExclamation width={14} height={14} />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-[12px] font-bold leading-tight">{a.title}</div>
-                  <div className="text-[10px] text-slate-500 mt-[2px]">
-                    {a.sub} · hace {a.time}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="p-3 border-t border-slate-200">
-            <Button variant="secondary" size="sm" className="w-full justify-center">
-              Ver todas las alertas
-            </Button>
-          </div>
-        </DCard>
+        <CriticalAlertsCard />
       </div>
 
       {/* Budget banner + Activity feed */}
