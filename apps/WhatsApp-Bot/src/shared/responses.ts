@@ -9,6 +9,7 @@ export const MSG = {
   ERROR_UNKNOWN_DOCUMENT:    "❌ No reconocí el documento. Mandá una foto más clara del comprobante o factura.",
   ERROR_UNKNOWN_COMMAND:     "Ese comando no lo conozco. Escribí *!ayuda* para ver los que tengo.",
   ERROR_CANCELLED_BAD_CMD:   "❌ No entendí el comando, así que cancelé lo que teníamos. Escribí *!ayuda* para ver los disponibles.",
+  ERROR_NO_OBRA:            "⚠️ No tenés ninguna obra asociada a este número. Usá *!iniciar* para registrarte.",
   ERROR_PROCESSING:          "❌ Algo salió mal, probá de nuevo.",
 
   SUCCESS_DATA_SAVED:        "✅ Listo, ya quedó guardado.",

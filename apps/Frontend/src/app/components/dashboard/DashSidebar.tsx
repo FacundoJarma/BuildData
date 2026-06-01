@@ -15,12 +15,12 @@ import {
 import { DAvatar } from "./DAvatar";
 
 const NAV_ITEMS = [
-  { id: "dashboard",  label: "Dashboard",  href: "/dashboard",            icon: <LayoutHeaderCellsLarge width={16} height={16} /> },
-  { id: "cronograma", label: "Cronograma", href: "/dashboard/cronograma", icon: <Calendar width={16} height={16} /> },
-  { id: "alertas",    label: "Alertas",    href: "/dashboard/alertas",     icon: <CircleExclamation width={16} height={16} />, badge: 2 },
-  { id: "pedidos",    label: "Pedidos",    href: "/dashboard/pedidos",     icon: <Box width={16} height={16} />, badge: 7 },
-  { id: "reportes",   label: "Reportes",   href: "/dashboard/reportes",    icon: <ChartBar width={16} height={16} /> },
-  { id: "equipo",     label: "Equipo",     href: "/dashboard/equipo",      icon: <Persons width={16} height={16} /> },
+  { id: "dashboard",  label: "Dashboard",  href: "/dashboard",                              icon: <LayoutHeaderCellsLarge width={16} height={16} /> },
+  { id: "cronograma", label: "Cronograma", href: "/construction?section=Cronograma",        icon: <Calendar width={16} height={16} /> },
+  { id: "alertas",    label: "Alertas",    href: "/construction?section=Alertas",           icon: <CircleExclamation width={16} height={16} /> },
+  { id: "pedidos",    label: "Pedidos",    href: "/construction?section=Pedidos",           icon: <Box width={16} height={16} />},
+  { id: "reportes",   label: "Reportes",   href: "/construction?section=Reportes",          icon: <ChartBar width={16} height={16} /> },
+  { id: "equipo",     label: "Equipo",     href: "/construction?section=Equipo",            icon: <Persons width={16} height={16} /> },
 ];
 
 export function DashSidebar({
@@ -93,14 +93,14 @@ export function DashSidebar({
       {/* Settings + Help */}
       <div className="px-3 pb-2 pt-1 flex flex-col gap-1">
         <Link
-          href="/dashboard/configuracion"
+          href="/construction?section=Configuraci%C3%B3n"
           className="flex items-center gap-[10px] px-3 py-[8px] rounded-md text-[12px] font-semibold text-white/70 hover:bg-white/[0.06] hover:text-white transition-colors"
         >
           <span className="text-white/55"><Gear width={16} height={16} /></span>
           <span className="flex-1">Configuración</span>
         </Link>
         <Link
-          href="/dashboard/ayuda"
+          href="/construction?section=Ayuda"
           className="flex items-center gap-[10px] px-3 py-[8px] rounded-md text-[12px] font-semibold text-white/70 hover:bg-white/[0.06] hover:text-white transition-colors"
         >
           <span className="text-white/55"><CircleInfo width={16} height={16} /></span>
