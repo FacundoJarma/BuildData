@@ -2,11 +2,11 @@ import type { User } from "../types/api.types";
 
 const API_URL = process.env.API_URL;
 
-export async function registerUser(phone: string, name: string) {
-  const res = await fetch(`${API_URL}/bot/registrar`, {
+export async function registerUser(phone: string, name: string, obra_id: string) {
+  const res = await fetch(`${API_URL}/obreros/registrar`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ telefono: phone, nombre: name }),
+    body: JSON.stringify({ telefono: phone, nombre: name, obra_id: obra_id }),
   });
 
   if (!res.ok) {
@@ -17,14 +17,14 @@ export async function registerUser(phone: string, name: string) {
 }
 
 export async function getUserByPhone(phone: string): Promise<User | null> {
-  const res = await fetch(`${API_URL}/bot/identificar/${phone}`);
+  const res = await fetch(`${API_URL}/obreros/telefono/${phone}`);
 
   if (!res.ok) {
     return null;
   }
 
   const data = await res.json() as User;
-
+  console.log()
   if (!data.obras || data.obras.length === 0) {
     return null;
   }
