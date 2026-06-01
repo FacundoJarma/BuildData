@@ -48,6 +48,6 @@ app.get("/", (req, res) => {
   res.send("BuildData API funcionando");
 });
 
-app.listen(3000, () => {
-  console.log("Servidor en http://localhost:3000");
+app.listen(3001, () => {
+  console.log("Servidor en http://localhost:3001");
 });

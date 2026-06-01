@@ -1,14 +1,12 @@
 export interface Obra {
-  id: number;
-  nombre: string;
-  direccion?: string;
-  estado?: string;
+  obra_id: number;
+  obra_nombre: string;
+  rol?: string;
+  joined_at?: string;
 }
 
 export interface User {
-  id: number;
   nombre: string;
   telefono: string;
-  rol: string;
   obras: Obra[];
 }
