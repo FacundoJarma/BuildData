@@ -3,7 +3,7 @@ import { Message } from "whatsapp-web.js";
 export interface Command {
   name: string;
   description: string;
-  execute: (message: Message) => Promise<void>;
+  execute: (message: Message, args: string[]) => Promise<void>;
 }
 
 const commands = new Map<string, Command>();

@@ -5,10 +5,9 @@ import { invalidateUserCache } from "../services/user.service";
 export const loginCommand: Command = {
   name: "!iniciar",
   description: "Es el comando para iniciar sesión. El bot te guiará en el proceso. Uso: !iniciar [nombre] [obra_id]",
-  execute: async (message) => {
-    const parts = message.body.replace("!iniciar ", "").trim().split(" ");
-    const obra_id = parts.pop();
-    const name = parts.join(" ");
+  execute: async (message, args) => {
+    const obra_id = args.pop();
+    const name = args.join(" ");
 
     if (!name || !obra_id) {
       await message.reply("Por favor, proporciona tu nombre y el ID de obra. Ejemplo: !iniciar Juan 123");

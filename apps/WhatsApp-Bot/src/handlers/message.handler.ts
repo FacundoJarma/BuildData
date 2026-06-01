@@ -59,7 +59,6 @@ export async function handleMessage(message: Message): Promise<void> {
       console.log(`Tipo de mensaje no manejado: ${message.type}`);
   }
 }
-
 async function handleTextMessage(
   phone: string,
   message: Message,
@@ -67,7 +66,8 @@ async function handleTextMessage(
   console.log(`Mensaje de ${phone}: ${message.body}`);
 
   if (message.body.startsWith(PREFIX)) {
-    const command = getCommand(message.body);
+    const [commandName, ...args] = message.body.split(" ");
+    const command = getCommand(commandName);
 
     if (!command) {
       if (hasPending(phone)) {
@@ -78,7 +78,7 @@ async function handleTextMessage(
       await message.reply(MSG.ERROR_UNKNOWN_COMMAND);
       return;
     }
-    await command.execute(message);
+    await command.execute(message, args);
   } else {
     await handleFreeText(phone, message);
   }
