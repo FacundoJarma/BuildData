@@ -9,6 +9,12 @@ import reportesRoutes from "./routes/reportes.js";
 import alertasRoutes from "./routes/alertas.js";
 import botRoutes from "./routes/bot.js";
 import { authMiddleware } from "./middleware/authMiddleware.js";
+import obrasRoutes from "./routes/obras.js";
+import obrerosRoutes from "./routes/obreros.js";
+import proveedoresRoutes from "./routes/proveedores.js";
+import gastosRoutes from "./routes/gastos.js";
+import presupuestosRoutes from "./routes/presupuestos.js";
+import materialesRoutes from "./routes/materiales.js";
 
 dotenv.config();
 
@@ -27,9 +33,16 @@ app.use("/tareas", authMiddleware, tareasRoutes);
 app.use("/usuarios", authMiddleware, usuariosRoutes);
 app.use("/reportes", authMiddleware, reportesRoutes);
 app.use("/alertas", authMiddleware, alertasRoutes);
-
-import obrasRoutes from "./routes/obras.js";
+app.use("/obreros", authMiddleware, obrerosRoutes);
+app.use("/proveedores", authMiddleware, proveedoresRoutes);
+app.use("/gastos", authMiddleware, gastosRoutes);
+app.use("/presupuestos", authMiddleware, presupuestosRoutes);
+app.use("/materiales", authMiddleware, materialesRoutes);
 app.use("/obras", authMiddleware, obrasRoutes);
+app.use("/usuarios", authMiddleware, usuariosRoutes);
+app.use("/bot", authMiddleware, botRoutes);
+app.use("/auth", authMiddleware, authRoutes);  // aunque las rutas de auth son públicas, el middleware no hace nada y deja pasar igual
+
 
 app.get("/", (req, res) => {
   res.send("BuildData API funcionando");
