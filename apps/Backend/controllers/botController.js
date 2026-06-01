@@ -124,7 +124,7 @@ export async function registrarRetraso(req, res) {
   const { tarea_id, dias_retraso, mensaje_id, obra_id, usuario_id } = req.body;
 
   try {
-    // Desplazar la fecha límite de la tarea
+
     const tarea = await pool.query(
       `UPDATE tareas
        SET fecha_limite = fecha_limite + ($1 || ' days')::interval,
@@ -134,7 +134,13 @@ export async function registrarRetraso(req, res) {
       [dias_retraso, tarea_id]
     );
 
-    // Crear alerta de retraso
+    // VALIDACIÓN
+    if (tarea.rows.length === 0) {
+      return res.status(404).json({
+        error: "Tarea no encontrada"
+      });
+    }
+
     await pool.query(
       `INSERT INTO alertas (obra_id, tipo, mensaje, prioridad, usuario_id)
        VALUES ($1, 'retraso', $2, 'alta', $3)`,
@@ -145,9 +151,10 @@ export async function registrarRetraso(req, res) {
       ]
     );
 
-    // Marcar mensaje como procesado
     await pool.query(
-      `UPDATE mensajes SET estado_procesamiento = 'procesado' WHERE id = $1`,
+      `UPDATE mensajes
+       SET estado_procesamiento = 'procesado'
+       WHERE id = $1`,
       [mensaje_id]
     );
 
@@ -155,9 +162,13 @@ export async function registrarRetraso(req, res) {
       tarea: tarea.rows[0],
       mensaje: `Fecha límite desplazada ${dias_retraso} días`,
     });
+
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Error registrando retraso" });
+
+    res.status(500).json({
+      error: "Error registrando retraso"
+    });
   }
 }
 
