@@ -24,7 +24,6 @@ export async function getUserByPhone(phone: string): Promise<User | null> {
   }
 
   const data = await res.json() as User;
-  console.log()
   if (!data.obras || data.obras.length === 0) {
     return null;
   }

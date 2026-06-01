@@ -2,21 +2,20 @@ import { Message, MessageTypes } from "whatsapp-web.js";
 import { getCommand, registerCommand } from "../commands/index";
 import { ayudaCommand } from "../commands/ayuda.command";
 import { loginCommand } from "../commands/login.command";
-import {
-  confirmCommand,
-  cancelCommand,
-} from "../commands/confirmAndCancel.command";
+import { cancelCommand } from "../commands/confirmAndCancel.command";
 import { handleFreeText } from "./freetext.handler";
 import { handleAudio } from "./voice.handler";
 import { clearPending, hasPending } from "../handlers/pendingQuery.store";
 import { handleImage } from "./image.handler";
 import { MSG } from "../shared/responses";
-import { ensureUserHasObra } from "../services/user.service";
+import { getUserObras } from "../services/user.service";
+import { buildingsCommand } from "../commands/buildings.command";
 
 registerCommand(ayudaCommand);
-registerCommand(confirmCommand);
 registerCommand(cancelCommand);
 registerCommand(loginCommand);
+registerCommand(buildingsCommand);
+
 
 const PREFIX = "!";
 
@@ -37,7 +36,7 @@ export async function handleMessage(message: Message): Promise<void> {
 
   const skipObraCheck = message.type === MessageTypes.TEXT && isWhitelisted(message.body);
   if (!skipObraCheck) {
-    const user = await ensureUserHasObra(phone);
+    const user = await getUserObras(phone);
     if (!user) {
       await message.reply(MSG.ERROR_NO_OBRA);
       return;

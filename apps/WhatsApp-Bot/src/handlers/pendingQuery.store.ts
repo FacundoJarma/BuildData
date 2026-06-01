@@ -11,9 +11,9 @@ export interface RawOperation {
 }
 
 export type PendingQuery =
-  | { type: "operation"; operation: RawOperation }
-  | { type: "comprobante"; data: ComprobanteData }
-  | { type: "factura"; data: FacturaData };
+  | { type: "operation"; operation: RawOperation; obra_id?: number }
+  | { type: "comprobante"; data: ComprobanteData; obra_id?: number }
+  | { type: "factura"; data: FacturaData; obra_id?: number };
 
 const pendingQueries = new Map<string, PendingQuery>();
 

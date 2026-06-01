@@ -9,7 +9,7 @@ interface CacheEntry {
 const userCache = new Map<string, CacheEntry>();
 const CACHE_TTL = 5 * 60 * 1000;
 
-export async function ensureUserHasObra(phone: string): Promise<User | null> {
+export async function getUserObras(phone: string): Promise<User | null> {
   const cached = userCache.get(phone);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
     return cached.data;

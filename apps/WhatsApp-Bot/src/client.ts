@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import qrcode from "qrcode-terminal";
 import { mongoStore } from "./mongoStore";
 import { handleMessage } from "./handlers/message.handler";
+import { handlePollVote } from "./services/pollConfirmation.service";
 
 const mongoUri = process.env.MONGO_URI!;
 const isProduction = process.env.NODE_ENV === "production";
@@ -44,6 +45,13 @@ export async function initClient() {
   });
   client.on("message", (message) => {
     handleMessage(message);
+  });
+
+  client.on("vote_update", (vote) => {
+    const voterPhone = vote.voter.split("@")[0];
+    const selected = vote.selectedOptions[0]?.name;
+    if (!selected) return;
+    handlePollVote(voterPhone, selected, vote.parentMessage);
   });
 
   client.initialize();

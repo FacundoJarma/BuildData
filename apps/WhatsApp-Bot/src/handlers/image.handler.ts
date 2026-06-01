@@ -5,7 +5,8 @@ import {
   FacturaData,
 } from "../services/vision.service";
 
-import { setPending, clearPending, hasPending } from "./pendingQuery.store";
+import { clearPending, hasPending } from "./pendingQuery.store";
+import { sendObraPoll } from "../services/pollConfirmation.service";
 import { MSG } from "../shared/responses";
 
 export async function handleImage(
@@ -25,13 +26,12 @@ export async function handleImage(
   }
 
   const result = await analyzeDocument(media.data, media.mimetype);
+  const chat = await message.getChat();
 
   switch (result.type) {
     case "comprobante":
       await message.reply(formatComprobante(result.data as ComprobanteData));
-      await message.reply(MSG.PROMPT_CONFIRM);
-
-      setPending(phone, {
+      await sendObraPoll(phone, chat, {
         type: "comprobante",
         data: result.data as ComprobanteData,
       });
@@ -39,9 +39,10 @@ export async function handleImage(
 
     case "factura":
       await message.reply(formatFactura(result.data as FacturaData));
-      await message.reply(MSG.PROMPT_CONFIRM);
-
-      setPending(phone, { type: "factura", data: result.data as FacturaData });
+      await sendObraPoll(phone, chat, {
+        type: "factura",
+        data: result.data as FacturaData,
+      });
       break;
 
     case "desconocido":
