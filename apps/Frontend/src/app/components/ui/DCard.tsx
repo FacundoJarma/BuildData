@@ -10,9 +10,7 @@ export function DCard({
   padding?: string;
 }) {
   return (
-    <div
-      className={`bg-white border border-slate-200 rounded-lg shadow-card ${padding} ${className}`}
-    >
+    <div className={`bg-white border border-slate-200 rounded-lg shadow-card ${padding} ${className}`}>
       {children}
     </div>
   );

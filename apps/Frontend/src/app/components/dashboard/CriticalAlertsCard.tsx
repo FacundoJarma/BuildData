@@ -1,6 +1,6 @@
 import { CircleExclamation } from "@gravity-ui/icons";
-import { DCard } from "./DCard";
-import { DPill } from "./DPill";
+import { DCard } from "@/app/components/ui/DCard";
+import { DPill } from "@/app/components/ui/DPill";
 import Button from "@/app/components/ui/Button";
 
 function CriticalAlertsCard() {

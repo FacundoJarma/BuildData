@@ -6,7 +6,7 @@ import {
   Bell,
 } from "@gravity-ui/icons";
 import Button from "@/app/components/ui/Button";
-import { DAvatar } from "./DAvatar";
+import { DAvatar } from "@/app/components/ui/DAvatar";
 
 export function DashTopBar({
   crumb = "Dashboard",

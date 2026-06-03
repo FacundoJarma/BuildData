@@ -1,6 +1,6 @@
-export { DPill } from "./DPill";
-export { DAvatar } from "./DAvatar";
-export { DCard } from "./DCard";
+export { DPill } from "@/app/components/ui/DPill";
+export { DAvatar } from "@/app/components/ui/DAvatar";
+export { DCard } from "@/app/components/ui/DCard";
 export { DStatTile } from "./DStatTile";
 export { DPageHeader } from "./DPageHeader";
 export { DashSidebar } from "./DashSidebar";

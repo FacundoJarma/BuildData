@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { DCard } from "./DCard";
+import { DCard } from "@/app/components/ui/DCard";
 
 const TONES: Record<string, { tint: string; fg: string }> = {
   primary:   { tint: "bg-primary-50",  fg: "text-primary" },

@@ -10,9 +10,9 @@ import {
 } from "@gravity-ui/icons";
 import { DPageHeader } from "./DPageHeader";
 import { DStatTile } from "./DStatTile";
-import { DCard } from "./DCard";
-import { DPill } from "./DPill";
-import { DAvatar } from "./DAvatar";
+import { DCard } from "@/app/components/ui/DCard";
+import { DPill } from "@/app/components/ui/DPill";
+import { DAvatar } from "@/app/components/ui/DAvatar";
 import Button from "@/app/components/ui/Button";
 import ProgressByTradeCards from "./ProgressByTradeCards";
 import CriticalAlertsCard from "./CriticalAlertsCard";

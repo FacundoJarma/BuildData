@@ -1,5 +1,6 @@
 "use client";
 
+import type React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -12,9 +13,9 @@ import {
   Gear,
   CircleInfo,
 } from "@gravity-ui/icons";
-import { DAvatar } from "./DAvatar";
+import { DAvatar } from "@/app/components/ui/DAvatar";
 
-const NAV_ITEMS = [
+const NAV_ITEMS: { id: string; label: string; href: string; icon: React.ReactNode; badge?: string | number }[] = [
   { id: "dashboard",  label: "Dashboard",  href: "/dashboard",                              icon: <LayoutHeaderCellsLarge width={16} height={16} /> },
   { id: "cronograma", label: "Cronograma", href: "/construction?section=Cronograma",        icon: <Calendar width={16} height={16} /> },
   { id: "alertas",    label: "Alertas",    href: "/construction?section=Alertas",           icon: <CircleExclamation width={16} height={16} /> },

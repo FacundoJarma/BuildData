@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { DCard } from "./DCard";
+import { DCard } from "@/app/components/ui/DCard";
 import PeriodNav from "@/app/components/ui/PeriodNav";
 
 function ProgressByTradeCards() {

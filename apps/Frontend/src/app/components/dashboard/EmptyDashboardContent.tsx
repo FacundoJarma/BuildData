@@ -11,9 +11,9 @@ import {
   CircleInfo,
 } from "@gravity-ui/icons";
 import { DPageHeader } from "./DPageHeader";
-import { DCard } from "./DCard";
+import { DCard } from "@/app/components/ui/DCard";
 import Button from "@/app/components/ui/Button";
-import { DAvatar } from "./DAvatar";
+import { DAvatar } from "@/app/components/ui/DAvatar";
 
 function BlueprintIllo() {
   return (
