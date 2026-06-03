@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getPresupuestos, crearPresupuesto, actualizarPresupuesto } from "../controllers/proveedoresController.js";
+import { getPresupuestos, crearPresupuesto, actualizarPresupuesto } from "../controllers/presupuestosController.js";
 
 const router = Router();
 router.get("/", getPresupuestos);
