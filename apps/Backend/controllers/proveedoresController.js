@@ -1,8 +1,44 @@
-import { Router } from "express";
-import { getMateriales, crearMaterial, actualizarMaterial } from "../controllers/materialesController.js";
+import { pool } from "../db.js";
 
-const router = Router();
-router.get("/:obra_id", getMateriales);
-router.post("/", crearMaterial);
-router.patch("/:id", actualizarMaterial);
-export default router;
+// GET /proveedores
+export async function getProveedores(req, res) {
+  try {
+    const result = await pool.query(`SELECT * FROM proveedores ORDER BY nombre ASC`);
+    res.json(result.rows);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
+}
+
+// POST /proveedores
+export async function crearProveedor(req, res) {
+  const { nombre, telefono, email } = req.body;
+  if (!nombre) return res.status(400).json({ error: "nombre es requerido" });
+  try {
+    const result = await pool.query(
+      `INSERT INTO proveedores (nombre, telefono, email) VALUES ($1, $2, $3) RETURNING *`,
+      [nombre, telefono, email]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
+}
+
+// POST /proveedores/vincular — vincular proveedor con material
+export async function vincularProveedor(req, res) {
+  const { material_id, proveedor_id } = req.body;
+  if (!material_id || !proveedor_id) return res.status(400).json({ error: "material_id y proveedor_id son requeridos" });
+  try {
+    const result = await pool.query(
+      `INSERT INTO materiales_proveedores (material_id, proveedor_id) VALUES ($1, $2) RETURNING *`,
+      [material_id, proveedor_id]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
+}
