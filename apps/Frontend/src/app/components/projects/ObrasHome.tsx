@@ -2,13 +2,11 @@
 
 import { useState } from "react";
 import { LayoutHeaderCellsLarge, FileArrowDown, Plus } from "@gravity-ui/icons";
-import { OBRAS, FILES, STATUS } from "@/app/projects/data/obras";
+import { OBRAS, STATUS } from "@/app/projects/data/obras";
 import { DCard } from "@/app/components/ui/DCard";
-import { DAvatar } from "@/app/components/ui/DAvatar";
 import Button from "@/app/components/ui/Button";
 import { WorkspaceSidebar } from "./WorkspaceSidebar";
 import { WorkspaceTopbar } from "./WorkspaceTopbar";
-import { FileIcon } from "./FileIcon";
 import { ObraCard } from "./ObraCard";
 import { ObraRow } from "./ObraRow";
 import { NuevaObraModal } from "./NuevaObraModal";
@@ -56,6 +54,7 @@ export function ObrasHome({ cover = "blueprint", mood = "focused", density = "re
     <div data-density={density} style={{ height: "100vh" }} className="obras-root flex bg-paper overflow-hidden">
       <WorkspaceSidebar current={tab} onNav={setTab} onNewObra={() => setNewObraOpen(true)} mood={mood} />
       <div className="flex-1 min-w-0 flex flex-col">
+        
         <WorkspaceTopbar query={query} onQuery={setQuery} />
 
         <main className="flex-1 overflow-y-auto">

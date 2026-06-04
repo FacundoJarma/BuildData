@@ -1,7 +1,7 @@
 "use client";
 
 import { Plus } from "@gravity-ui/icons";
-import { PEOPLE, ROLES } from "@/app/projects/data/wizard";
+import { PEOPLE } from "@/app/projects/data/wizard";
 import { DAvatar } from "@/app/components/ui/DAvatar";
 import { PickCard } from "./PickCard";
 
@@ -13,6 +13,7 @@ export function Step3({ data, setData }: { data: any; setData: (d: any) => void 
 
   return (
     <div className="space-y-5">
+      {/*
       <div>
         <div className="text-[10px] tracking-[0.06em] uppercase font-bold text-slate-500 mb-3">Tu rol en esta obra</div>
         <div className="grid grid-cols-2 gap-3">
@@ -22,7 +23,7 @@ export function Step3({ data, setData }: { data: any; setData: (d: any) => void 
           ))}
         </div>
       </div>
-
+      */}
       <div>
         <div className="flex items-end justify-between mb-3">
           <div>

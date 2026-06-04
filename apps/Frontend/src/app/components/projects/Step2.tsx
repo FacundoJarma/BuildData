@@ -25,8 +25,7 @@ export function Step2({ data, setData }: { data: any; setData: (d: any) => void 
           </WField>
           <WField label="País">
             <WSelect value={data.country} onChange={(e: any) => setData({ ...data, country: e.target.value })}>
-              <option value="ar">Argentina</option><option value="uy">Uruguay</option>
-              <option value="cl">Chile</option><option value="mx">México</option>
+              <option value="ar">Argentina</option>
             </WSelect>
           </WField>
         </div>
@@ -51,6 +50,7 @@ export function Step2({ data, setData }: { data: any; setData: (d: any) => void 
         </div>
       </div>
 
+      {/*
       <div className="bg-info-50 border border-[#BFDBFE] rounded-lg p-4 flex items-start gap-3">
         <div className="w-7 h-7 rounded-full bg-info text-white flex items-center justify-center flex-none">
           <CircleInfo width={13} height={13} />
@@ -58,7 +58,9 @@ export function Step2({ data, setData }: { data: any; setData: (d: any) => void 
         <div className="text-[12px] text-slate-700 leading-snug">
           Usamos la dirección para <b>georreferenciar fotos y reportes</b> que tu equipo manda por WhatsApp. Nunca compartimos esto con nadie.
         </div>
+        
       </div>
+      */}
     </div>
   );
 }
