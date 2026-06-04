@@ -1,4 +1,4 @@
-import CompareTable from "../../components/pricing/CompareTable";
+import CompareTable from "../_components/CompareTable";
 import { comparisonCategories } from "../data/plans";
 
 export default function Comparison() {

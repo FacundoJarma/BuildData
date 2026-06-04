@@ -1,4 +1,4 @@
-import UnderConstructionPage from "../components/ui/UnderConstructionPage";
+import UnderConstructionPage from "@/components/ui/UnderConstructionPage";
 
 export default function ConstructionPage({
   searchParams,

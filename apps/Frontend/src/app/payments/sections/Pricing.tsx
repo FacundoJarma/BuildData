@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { CheckDouble } from "@gravity-ui/icons";
-import PricingCard from "../../components/pricing/PricingCard";
+import PricingCard from "../_components/PricingCard";
 import { pricingCardsMonthly, pricingCardsYearly } from "../data/plans";
-import PricingToggle from "../../components/pricing/PricingToggle";
+import PricingToggle from "../_components/PricingToggle";
 
 export default function Pricing() {
 

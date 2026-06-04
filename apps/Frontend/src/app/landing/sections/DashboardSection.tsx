@@ -2,7 +2,7 @@
 
 import { motion as m } from "framer-motion";
 import { Sparkles, Magnifier } from "@gravity-ui/icons";
-import LiveDashboard from "../../components/landing/LiveDashboard";
+import LiveDashboard from "../_components/LiveDashboard";
 import { DASHBOARD_CALLOUTS } from "../data/landing";
 
 const iconMap: Record<string, React.ReactNode> = {

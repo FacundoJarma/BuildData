@@ -1,16 +1,18 @@
 "use client";
 
-import { useState } from "react";
-import { DashboardContent, EmptyDashboardContent, ChatBubble } from "@/app/components/dashboard";
+import { useState, useEffect } from "react";
+import { DashboardContent, EmptyDashboardContent } from "@/app/dashboard/_components";
+import type { DashboardData } from "@/types/dashboard";
+import { getDashboard } from "@/services/dashboardService";
 
 export default function DashboardPage() {
-  const [isEmpty] = useState(true);
+  const [data, setData] = useState<DashboardData | null>(null);
 
-  return (
-    <>
-      {isEmpty ? <EmptyDashboardContent /> : <DashboardContent />}
-      
-      {/* {!isEmpty && <ChatBubble />} */}
-    </>
-  );
+  useEffect(() => {
+    getDashboard("belgrano").then(setData);
+  }, []);
+
+  if (!data) return <EmptyDashboardContent />;
+
+  return <DashboardContent data={data} />;
 }

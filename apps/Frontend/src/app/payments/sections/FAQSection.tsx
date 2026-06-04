@@ -1,4 +1,4 @@
-import FAQ from "../../components/shared/FAQ";
+import FAQ from "../../landing/_components/FAQ";
 import { faqItems } from "../data/plans";
 
 export default function FAQSection() {

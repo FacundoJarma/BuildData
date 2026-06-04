@@ -2,7 +2,7 @@
 
 import { motion as m } from "framer-motion";
 import { CircleCheck, Sparkles } from "@gravity-ui/icons";
-import LiveBot from "../../components/landing/LiveBot";
+import LiveBot from "../_components/LiveBot";
 
 export default function ChatbotSection() {
   return (

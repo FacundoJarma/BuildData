@@ -3,8 +3,8 @@
 import { useState, useEffect, useRef, createElement } from "react";
 import { motion as M, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { Check, Microphone, Sparkles, Box, Database, Calendar, CircleCheck } from "@gravity-ui/icons";
-import PhoneMockup from "../../components/landing/PhoneMockup";
-import DashboardMockup from "../../components/landing/DashboardMockup";
+import PhoneMockup from "../_components/PhoneMockup";
+import DashboardMockup from "../_components/DashboardMockup";
 
 const Stage1 = () => (
   <div className="relative">

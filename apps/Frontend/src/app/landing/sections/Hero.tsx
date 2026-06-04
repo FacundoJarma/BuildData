@@ -1,8 +1,8 @@
 "use client";
 
 import { ArrowRight, CircleCheck, StarFill } from "@gravity-ui/icons";
-import PhoneMockup from "../../components/landing/PhoneMockup";
-import DashboardMockup from "../../components/landing/DashboardMockup";
+import PhoneMockup from "../_components/PhoneMockup";
+import DashboardMockup from "../_components/DashboardMockup";
 import { LOGOS } from "../data/landing";
 
 export default function Hero() {

@@ -1,6 +1,6 @@
 "use client";
 
-import { ObrasHome } from "@/app/components/projects/ObrasHome";
+import { ObrasHome } from "@/app/projects/_components/ObrasHome";
 
 export default function ProjectsPage() {
   return <ObrasHome />;

@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import BrandPanel from "./sections/BrandPanel";
-import SignInForm from "../components/auth/SignInForm";
-import SignUpForm from "../components/auth/SignUpForm";
+import BrandPanel from "./_components/BrandPanel";
+import SignInForm from "./_components/SignInForm";
+import SignUpForm from "./_components/SignUpForm";
 
 export default function LoginPage() {
   const [isSignup, setIsSignup] = useState(false);
