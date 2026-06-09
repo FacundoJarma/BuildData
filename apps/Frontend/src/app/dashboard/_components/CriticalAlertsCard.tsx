@@ -9,39 +9,42 @@ interface Props {
 }
 
 function CriticalAlertsCard({ alerts }: Props) {
-    const criticalsAlertsCounter = alerts.filter(a => a.tone === "critical").length;
-    return (
-
+  const criticalsAlertsCounter = alerts.filter(
+    (a) => a.tone === "critical",
+  ).length;
+  return (
     <DCard padding="p-0">
-          <div className="px-5 py-3 border-b border-slate-200 flex items-center justify-between">
-            <div className="text-[14px] font-bold">Críticos activos</div>
-            <DPill tone="criticalSolid"> {criticalsAlertsCounter} </DPill>
-          </div>
-          <div className="divide-y divide-slate-200">
-            {alerts.map((a, i) => (
-              <div key={i} className="px-4 py-3 flex items-start gap-3">
-                <div
-                  className={`w-8 h-8 rounded-md flex items-center justify-center flex-none
+      <div className="px-5 py-3 border-b border-slate-200 flex items-center justify-between">
+        <div className="text-[14px] font-bold">Críticos activos</div>
+        <DPill tone="criticalSolid"> {criticalsAlertsCounter} </DPill>
+      </div>
+      <div className="divide-y divide-slate-200">
+        {alerts.map((a, i) => (
+          <div key={i} className="px-4 py-3 flex items-start gap-3">
+            <div
+              className={`w-8 h-8 rounded-md flex items-center justify-center flex-none
                     ${a.tone === "critical" ? "bg-critical-50 text-[#B91C1C]" : "bg-attention-50 text-[#A16207]"}`}
-                >
-                  <CircleExclamation width={14} height={14} />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-[12px] font-bold leading-tight">{a.title}</div>
-                  <div className="text-[10px] text-slate-500 mt-[2px]">
-                    {a.subtitle} · hace {a.time}
-                  </div>
-                </div>
+            >
+              <CircleExclamation width={14} height={14} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-[12px] font-bold leading-tight">
+                {a.title}
               </div>
-            ))}
+              <div className="text-[10px] text-slate-500 mt-[2px]">
+                {a.subtitle} · hace {a.time}
+              </div>
+            </div>
           </div>
-          <div className="p-3 border-t border-slate-200">
-            <Button variant="secondary" size="sm" className="w-full justify-center">
-              Ver todas las alertas
-            </Button>
-          </div>
-        </DCard>
-        )
+        ))}
+      </div>
+      <div className="p-3 border-t border-slate-200">
+        <Button variant="secondary" size="sm" className="w-full justify-center">
+          Ver todas las alertas
+        </Button>
+      </div>
+    </DCard>
+  );
 }
 
 export default CriticalAlertsCard;

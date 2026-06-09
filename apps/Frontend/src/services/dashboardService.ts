@@ -149,7 +149,6 @@ const MOCK: ApiDashboardResponse = {
     { name: "Instalaciones eléctricas",   pct: 46 },
     { name: "Instalaciones sanitarias",   pct: 58 },
     { name: "Terminaciones",              pct: 24 },
-    { name: "Carpintería",                pct: 12 },
   ],
   activityFeed: [
     {

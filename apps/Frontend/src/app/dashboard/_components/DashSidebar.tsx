@@ -8,6 +8,7 @@ import {
   Calendar,
   CircleExclamation,
   Box,
+  Receipt,
   ChartBar,
   Persons,
   Gear,
@@ -20,6 +21,9 @@ const NAV_ITEMS: { id: string; label: string; href: string; icon: React.ReactNod
   { id: "cronograma", label: "Cronograma", href: "/construction?section=Cronograma",        icon: <Calendar width={16} height={16} /> },
   { id: "alertas",    label: "Alertas",    href: "/construction?section=Alertas",           icon: <CircleExclamation width={16} height={16} /> },
   { id: "pedidos",    label: "Pedidos",    href: "/construction?section=Pedidos",           icon: <Box width={16} height={16} />},
+  { id: "stock",    label: "Stock",    href: "/construction?section=Stock",           icon: <Box width={16} height={16} />},
+  { id: "recibos",    label: "Recibos",    href: "/construction?section=Recibos",           icon: <Receipt width={16} height={16} />},
+  { id: "actividad",    label: "Actividad",    href: "/construction?section=Actividad",           icon: <CircleInfo width={16} height={16} />},
   { id: "reportes",   label: "Reportes",   href: "/construction?section=Reportes",          icon: <ChartBar width={16} height={16} /> },
   { id: "equipo",     label: "Equipo",     href: "/construction?section=Equipo",            icon: <Persons width={16} height={16} /> },
 ];
