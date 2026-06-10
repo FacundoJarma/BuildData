@@ -116,3 +116,17 @@ export async function getFiles(): Promise<FileItem[]> {
     { name: "Reporte_semanal_S20.pdf", kind: "pdf", obra: "Oficinas Pilar", when: "11 May", size: "900 KB" },
   ];
 }
+
+export async function createObra(data: Omit<Obra, "id" | "progress" | "alerts" | "pedidos" | "lastActivity" | "lastActivityWho">): Promise<Obra> {
+  // TODO: Reemplazar con llamada real a la API
+  return {
+    id: `obra-${Date.now()}`,
+    ...data,
+    progress: 0,
+    alerts: 0,
+    pedidos: 0,
+    lastActivity: "hace instantes",
+    lastActivityWho: "Sistema",
+    starred: false,
+  };
+}
