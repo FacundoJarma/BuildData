@@ -1,0 +1,102 @@
+import { pool } from "../db.js";
+
+function formatRubro(row) {
+  return {
+    id: row.id,
+    nombre: row.nombre,
+    cap: parseInt(row.cap) || 0,
+    spent: parseInt(row.spent) || 0,
+    progress: parseInt(row.progress) || 0,
+  };
+}
+
+// GET /obras/:obraId/rubros
+export async function getRubros(req, res) {
+  const { obraId } = req.params;
+  try {
+    const result = await pool.query(
+      `SELECT r.id, r.nombre, pr.cap, pr.spent,
+        CASE WHEN pr.cap > 0 THEN ROUND((pr.spent::numeric / pr.cap) * 100) ELSE 0 END AS progress
+       FROM rubros r
+       JOIN presupuesto_rubros pr ON pr.rubro_id = r.id
+       WHERE r.obra_id = $1 ORDER BY r.nombre ASC`,
+      [obraId]
+    );
+    res.json({ rubros: result.rows.map(formatRubro) });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ code: "SERVER_ERROR", message: error.message });
+  }
+}
+
+// POST /obras/:obraId/rubros
+export async function crearRubro(req, res) {
+  const { obraId } = req.params;
+  const { nombre, presupuesto } = req.body;
+  if (!nombre || presupuesto === undefined) {
+    return res.status(400).json({ code: "VALIDATION_ERROR", message: "nombre y presupuesto son requeridos" });
+  }
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const rubro = await client.query(
+      `INSERT INTO rubros (obra_id, nombre) VALUES ($1,$2) RETURNING *`,
+      [obraId, nombre]
+    );
+    await client.query(
+      `INSERT INTO presupuesto_rubros (rubro_id, cap) VALUES ($1,$2)`,
+      [rubro.rows[0].id, presupuesto]
+    );
+    await client.query("COMMIT");
+    res.status(201).json(formatRubro({ ...rubro.rows[0], cap: presupuesto, spent: 0, progress: 0 }));
+  } catch (error) {
+    await client.query("ROLLBACK");
+    console.error(error);
+    res.status(500).json({ code: "SERVER_ERROR", message: error.message });
+  } finally { client.release(); }
+}
+
+// PATCH /obras/:obraId/rubros/:rubroId
+export async function updateRubro(req, res) {
+  const { rubroId, obraId } = req.params;
+  const { cap, spent } = req.body;
+  try {
+    await pool.query(
+      `UPDATE presupuesto_rubros SET
+        cap = COALESCE($1, cap),
+        spent = COALESCE($2, spent),
+        updated_at = NOW()
+       WHERE rubro_id = $3`,
+      [cap, spent, rubroId]
+    );
+    // Recalcular ejecutado total
+    await pool.query(
+      `UPDATE presupuestos SET
+        ejecutado = (SELECT COALESCE(SUM(pr.spent),0) FROM presupuesto_rubros pr JOIN rubros r ON r.id = pr.rubro_id WHERE r.obra_id = $1),
+        updated_at = NOW()
+       WHERE obra_id = $1`, [obraId]
+    );
+    const result = await pool.query(
+      `SELECT r.id, r.nombre, pr.cap, pr.spent,
+        CASE WHEN pr.cap > 0 THEN ROUND((pr.spent::numeric / pr.cap)*100) ELSE 0 END AS progress
+       FROM rubros r JOIN presupuesto_rubros pr ON pr.rubro_id = r.id
+       WHERE r.id = $1`, [rubroId]
+    );
+    res.json(formatRubro(result.rows[0]));
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ code: "SERVER_ERROR", message: error.message });
+  }
+}
+
+// DELETE /obras/:obraId/rubros/:rubroId
+export async function deleteRubro(req, res) {
+  const { rubroId } = req.params;
+  try {
+    await pool.query(`DELETE FROM rubros WHERE id = $1`, [rubroId]);
+    res.status(204).send();
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ code: "SERVER_ERROR", message: error.message });
+  }
+}
