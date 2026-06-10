@@ -192,15 +192,6 @@ export function WorkspaceSidebar({
           <button className={`text-[10px] font-bold mt-2 hover:underline ${T.storageLink}`}>Ampliar plan →</button>
         </div>
       </nav>
-
-      <div className={`p-3 flex items-center gap-[10px] ${T.footer}`}>
-        <DAvatar initials="JM" size={30} />
-        <div className="flex-1 min-w-0">
-          <div className={`text-[12px] font-bold ${T.footerName}`}>J. Méndez</div>
-          <div className={`text-[10px] ${T.footerRole}`}>Director de obra</div>
-        </div>
-        <button className={T.footerArrow}><ChevronRightIcon /></button>
-      </div>
     </aside>
   );
 }

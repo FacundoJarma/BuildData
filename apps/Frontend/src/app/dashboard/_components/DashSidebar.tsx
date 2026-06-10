@@ -14,32 +14,27 @@ import {
   Gear,
   CircleInfo,
 } from "@gravity-ui/icons";
-import { DAvatar } from "@/components/ui/DAvatar";
 
 const NAV_ITEMS: { id: string; label: string; href: string; icon: React.ReactNode; badge?: string | number }[] = [
-  { id: "dashboard",  label: "Dashboard",  href: "/dashboard",                              icon: <LayoutHeaderCellsLarge width={16} height={16} /> },
-  { id: "cronograma", label: "Cronograma", href: "/construction?section=Cronograma",        icon: <Calendar width={16} height={16} /> },
-  { id: "alertas",    label: "Alertas",    href: "/construction?section=Alertas",           icon: <CircleExclamation width={16} height={16} /> },
-  { id: "pedidos",    label: "Pedidos",    href: "/construction?section=Pedidos",           icon: <Box width={16} height={16} />},
-  { id: "stock",    label: "Stock",    href: "/construction?section=Stock",           icon: <Box width={16} height={16} />},
-  { id: "recibos",    label: "Recibos",    href: "/construction?section=Recibos",           icon: <Receipt width={16} height={16} />},
-  { id: "actividad",    label: "Actividad",    href: "/construction?section=Actividad",           icon: <CircleInfo width={16} height={16} />},
-  { id: "reportes",   label: "Reportes",   href: "/construction?section=Reportes",          icon: <ChartBar width={16} height={16} /> },
-  { id: "equipo",     label: "Equipo",     href: "/construction?section=Equipo",            icon: <Persons width={16} height={16} /> },
+  { id: "dashboard", label: "Dashboard", href: "/dashboard", icon: <LayoutHeaderCellsLarge width={16} height={16} /> },
+  { id: "cronograma", label: "Cronograma", href: "/construction?section=Cronograma", icon: <Calendar width={16} height={16} /> },
+  { id: "alertas", label: "Alertas", href: "/construction?section=Alertas", icon: <CircleExclamation width={16} height={16} /> },
+  { id: "pedidos", label: "Pedidos", href: "/construction?section=Pedidos", icon: <Box width={16} height={16} /> },
+  { id: "stock", label: "Stock", href: "/construction?section=Stock", icon: <Box width={16} height={16} /> },
+  { id: "recibos", label: "Recibos", href: "/construction?section=Recibos", icon: <Receipt width={16} height={16} /> },
+  { id: "actividad", label: "Actividad", href: "/construction?section=Actividad", icon: <CircleInfo width={16} height={16} /> },
+  { id: "reportes", label: "Reportes", href: "/construction?section=Reportes", icon: <ChartBar width={16} height={16} /> },
+  { id: "equipo", label: "Equipo", href: "/construction?section=Equipo", icon: <Persons width={16} height={16} /> },
 ];
 
 export function DashSidebar({
   projectLabel = "Edificio Belgrano",
   projectSub = "Sector C · 68% completa",
-  userInitials = "JM",
-  userName = "J. Méndez",
-  userRole = "Director de obra",
+
 }: {
   projectLabel?: string;
   projectSub?: string;
-  userInitials?: string;
-  userName?: string;
-  userRole?: string;
+
 }) {
   const pathname = usePathname();
 
@@ -113,14 +108,7 @@ export function DashSidebar({
         </Link>
       </div>
 
-      {/* User */}
-      <div className="border-t border-white/10 p-3 flex items-center gap-[10px]">
-        <DAvatar initials={userInitials} size={30} />
-        <div className="flex-1 min-w-0">
-          <div className="text-[12px] font-bold">{userName}</div>
-          <div className="text-[10px] text-white/55">{userRole}</div>
-        </div>
-      </div>
+
     </aside>
   );
 }

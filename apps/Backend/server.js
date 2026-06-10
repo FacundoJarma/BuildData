@@ -20,7 +20,6 @@ import presupuestosRoutes from "./routes/presupuestos.js";
 import materialesRoutes from "./routes/materiales.js";
 
 dotenv.config();
-process.env.NODE_TLS_UNAUTHORIZED = "0"
 const app = express();
 app.use(cors())
 app.use(express.json());
