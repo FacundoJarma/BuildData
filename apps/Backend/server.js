@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
-
+import cors from "cors"
+import rubrosRoutes from "./routes/rubros.routes.js";
 import authRoutes from "./routes/auth.js";
 import dashboardRoutes from "./routes/dashboard.js";
 import tareasRoutes from "./routes/tareas.js";
@@ -19,6 +20,7 @@ import materialesRoutes from "./routes/materiales.js";
 dotenv.config();
 
 const app = express();
+app.use(cors())
 app.use(express.json());
 
 // Auth — pública (no necesita token)
@@ -42,6 +44,8 @@ app.use("/obras", authMiddleware, obrasRoutes);
 app.use("/usuarios", authMiddleware, usuariosRoutes);
 app.use("/bot", authMiddleware, botRoutes);
 app.use("/auth", authMiddleware, authRoutes);  // aunque las rutas de auth son públicas, el middleware no hace nada y deja pasar igual
+
+app.use("/rubros", rubrosRoutes);
 
 
 app.get("/", (req, res) => {
