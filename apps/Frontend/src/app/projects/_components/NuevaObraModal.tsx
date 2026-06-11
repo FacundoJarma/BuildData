@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Xmark, ArrowRight } from "@gravity-ui/icons";
+import { Xmark, ArrowRight, CircleExclamation } from "@gravity-ui/icons";
 import { NewStep1Type } from "./NewStep1Type";
 import { NewStep2Data } from "./NewStep2Data";
 import { NewStep3Team } from "./NewStep3Team";
 import { NewStep4WhatsApp } from "./NewStep4WhatsApp";
 import { NewSuccessState } from "./NewSuccessState";
 import Button from "@/components/ui/Button";
+import { createObra } from "@/services/projectsService";
 
 const totalSteps = 4;
 
@@ -26,17 +27,34 @@ const INITIAL_DATA = {
   direccion: "",
   inicio: "",
   fin: "",
-  team: [{ name: "", phone: "", role: "capataz" }],
+  team: [],
   waConnect: false,
 };
 
 export function NuevaObraModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [step, setStep] = useState(1);
   const [data, setData] = useState(INITIAL_DATA);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [obraCreated, setObraCreated] = useState<any>(null);
 
   useEffect(() => {
-    if (open) { setStep(1); setData(INITIAL_DATA); }
+    if (open) { setStep(1); setData(INITIAL_DATA); setError(""); setObraCreated(null); }
   }, [open]);
+
+  const handleCreate = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const obra = await createObra(data);
+      setObraCreated(obra);
+      setStep(step + 1);
+    } catch (e: any) {
+      setError(e.message || "Error al crear obra");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -102,7 +120,7 @@ export function NuevaObraModal({ open, onClose }: { open: boolean; onClose: () =
           {step === 2 && <NewStep2Data data={data} setData={setData} />}
           {step === 3 && <NewStep3Team data={data} setData={setData} />}
           {step === 4 && <NewStep4WhatsApp data={data} setData={setData} />}
-          {step === 5 && <NewSuccessState data={data} onClose={onClose} />}
+          {step === 5 && <NewSuccessState data={data} obra={obraCreated} onClose={onClose} />}
         </div>
 
         {/* Footer / actions */}
@@ -117,11 +135,17 @@ export function NuevaObraModal({ open, onClose }: { open: boolean; onClose: () =
                   Atrás
                 </Button>
               )}
+              {error && (
+                <div className="flex items-center gap-2 text-[12px] font-semibold text-critical">
+                  <CircleExclamation width={14} height={14} />
+                  {error}
+                </div>
+              )}
               <button
-                disabled={!canNext}
-                onClick={() => setStep(step + 1)}
-                className={`inline-flex items-center gap-2 font-bold rounded-md px-5 py-[10px] text-[13px] transition-colors ${canNext ? "bg-primary hover:bg-primary-700 text-white" : "bg-slate-300 text-white cursor-not-allowed"}`}>
-                {step === totalSteps ? "Crear obra" : "Siguiente"} <ArrowRight width={13} height={13} />
+                disabled={!canNext || loading}
+                onClick={step === totalSteps ? handleCreate : () => setStep(step + 1)}
+                className={`inline-flex items-center gap-2 font-bold rounded-md px-5 py-[10px] text-[13px] transition-colors ${canNext && !loading ? "bg-primary hover:bg-primary-700 text-white" : "bg-slate-300 text-white cursor-not-allowed"}`}>
+                {loading ? "Creando..." : step === totalSteps ? "Crear obra" : "Siguiente"} {!loading && <ArrowRight width={13} height={13} />}
               </button>
             </div>
           </div>

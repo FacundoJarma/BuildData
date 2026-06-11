@@ -13,6 +13,7 @@ import { WorkspaceTopbar } from "./WorkspaceTopbar";
 import { ObraCard } from "./ObraCard";
 import { ObraRow } from "./ObraRow";
 import { NuevaObraModal } from "./NuevaObraModal";
+import { ProjectsSkeleton } from "./ProjectsSkeleton";
 
 const FILTERS = [
   { id: "todas", label: "Todas", match: () => true },
@@ -70,9 +71,12 @@ export function ObrasHome({
   const [tab, setTab] = useState("obras");
   const [query, setQuery] = useState("");
   const [newObraOpen, setNewObraOpen] = useState(false);
+  const [obrasLoading, setObrasLoading] = useState(true);
 
   useEffect(() => {
-    getObras().then(setObras);
+    getObras()
+      .then(setObras)
+      .finally(() => setObrasLoading(false));
   }, []);
 
   const activeFilter = FILTERS.find((f) => f.id === filter) || FILTERS[0];
@@ -87,7 +91,7 @@ export function ObrasHome({
 
   const recientes = obras.filter((o) => o.status !== "finalizada").slice(0, 4);
   const totals = {
-    activas: obras.filter((o) => o.status === "en-curso").length,
+    activas: obras.filter((o) => o.status === "en-progreso").length,
     alertas: obras.reduce((s, o) => s + o.alerts, 0),
     pedidos: obras.reduce((s, o) => s + o.pedidos, 0),
   };
@@ -100,6 +104,20 @@ export function ObrasHome({
     day: "numeric",
     month: "long",
   });
+
+  if (obrasLoading) {
+    return (
+      <div className="obras-root flex bg-paper overflow-hidden" style={{ height: "100vh" }}>
+        <WorkspaceSidebar current={tab} onNav={setTab} onNewObra={() => {}} mood={mood} />
+        <div className="flex-1 min-w-0 flex flex-col">
+          <WorkspaceTopbar query="" onQuery={() => {}} />
+          <main className="flex-1 overflow-y-auto">
+            <ProjectsSkeleton />
+          </main>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -137,7 +155,7 @@ export function ObrasHome({
                   return (
                     <a
                       key={o.id}
-                      href="/dashboard"
+                      href={`/dashboard?id=${o.id}`}
                       className="group bg-white border border-slate-200 rounded-lg p-4 flex gap-3 hover:border-primary hover:shadow-card2 transition-all"
                     >
                       <div
@@ -275,31 +293,6 @@ export function ObrasHome({
                 </div>
               )}
             </section>
-
-            {/* <section className="mb-6">
-              <div className="flex items-center justify-between mb-3">
-                <div className="text-[11px] tracking-[0.08em] uppercase font-bold text-slate-500">Archivos recientes</div>
-                <button className="text-[11px] font-bold text-primary hover:underline">Ver todos →</button>
-              </div>
-              <DCard padding="p-0">
-                {FILES.map((f, i) => (
-                  <div key={f.name} className={`grid grid-cols-[44px_1fr_180px_100px_70px_24px] gap-4 items-center px-4 py-[10px] hover:bg-slate-50 cursor-pointer ${i < FILES.length - 1 ? "border-b border-slate-100" : ""}`}>
-                    <FileIcon kind={f.kind} size={28} />
-                    <div className="min-w-0">
-                      <div className="text-[13px] font-bold text-slate-950 truncate">{f.name}</div>
-                    </div>
-                    <div className="text-[11px] text-slate-600 truncate">{f.obra}</div>
-                    <div className="text-[11px] text-slate-500">{f.when}</div>
-                    <div className="text-[11px] text-slate-500 tnum text-right">{f.size}</div>
-                    <button className="text-slate-400 hover:text-slate-700 p-1">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                        <circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" />
-                      </svg>
-                    </button>
-                  </div>
-                ))}
-              </DCard>
-            </section> */}
           </div>
         </main>
       </div>
