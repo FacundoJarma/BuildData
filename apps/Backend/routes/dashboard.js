@@ -3,7 +3,7 @@ import { getDashboard } from "../controllers/dashboardController.js";
 
 const router = Router();
 
-// GET /dashboard/:obra_id
-router.get("/:obra_id", getDashboard);
+// GET /dashboard/:obraId
+router.get("/:obraId", getDashboard);
 
 export default router;

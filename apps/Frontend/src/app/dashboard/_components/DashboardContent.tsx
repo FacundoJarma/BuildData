@@ -42,7 +42,7 @@ export function DashboardContent({ data }: Props) {
     <>
       <DPageHeader
         title="Dashboard"
-        subtitle={`s${obra.name} · ${obra.sector} · actualizado ${obra.lastUpdate}`}
+        subtitle={`${obra.name} · actualizado ${obra.lastUpdate}`}
         right={
           <>
             <Button
