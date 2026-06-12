@@ -10,6 +10,13 @@ async function buildObra(obra) {
      WHERE uo.obra_id = $1`,
     [obra.id]
   );
+
+  const tareasTotal = parseInt(obra.tareas_total) || 0;
+  const tareasCompletadas = parseInt(obra.tareas_completadas) || 0;
+  const progress = tareasTotal > 0
+    ? Math.round((tareasCompletadas / tareasTotal) * 100)
+    : 0;
+
   return {
     id: obra.id,
     name: obra.nombre,
@@ -21,7 +28,9 @@ async function buildObra(obra) {
     country: obra.country,
     type: obra.type,
     status: obra.estado,
-    progress: obra.progress || 0,
+    progress,
+    tareasCompletadas,
+    tareasTotal,
     alerts: parseInt(obra.alerts) || 0,
     pedidos: parseInt(obra.pedidos) || 0,
     team: team.rows,
@@ -39,7 +48,9 @@ export async function getObras(req, res) {
     const result = await pool.query(
       `SELECT o.*,
         (SELECT COUNT(*) FROM alertas a WHERE a.obra_id = o.id AND a.resuelta = false) AS alerts,
-        (SELECT COUNT(*) FROM pedidos_materiales p WHERE p.obra_id = o.id AND p.aprobado = false) AS pedidos
+        (SELECT COUNT(*) FROM pedidos_materiales p WHERE p.obra_id = o.id AND p.aprobado = false) AS pedidos,
+        (SELECT COUNT(*) FROM tareas t WHERE t.obra_id = o.id) AS tareas_total,
+        (SELECT COUNT(*) FROM tareas t WHERE t.obra_id = o.id AND t.estado = 'completada') AS tareas_completadas
        FROM obras o
        JOIN usuarios_obras uo ON uo.obra_id = o.id
        WHERE uo.usuario_id = $1
