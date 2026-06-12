@@ -7,10 +7,23 @@ export interface CreateObraInput {
   nombre: string;
   codigo: string;
   direccion: string;
+  ciudad?: string;
+  provincia?: string;
+  zip?: string;
+  pais?: string;
   inicio: string;
   fin: string;
+  status?: string;
   team: { name: string; phone: string; role: string }[];
   waConnect: boolean;
+  presupuestoTotal?: number;
+  rubros?: { nombre: string; presupuesto?: number }[];
+  clientName?: string;
+  clientContact?: string;
+  clientCuit?: string;
+  clientEmail?: string;
+  clientPhone?: string;
+  clientNotes?: string;
 }
 
 interface CreateObraPayload {
@@ -18,8 +31,8 @@ interface CreateObraPayload {
   code: string;
   type: string;
   address: string;
-  city: string;
-  province: string;
+  city?: string;
+  province?: string;
   zip?: string;
   country?: string;
   startDate?: string;
@@ -29,6 +42,12 @@ interface CreateObraPayload {
   team?: string[];
   presupuestoTotal: number;
   rubros: { nombre: string; presupuesto?: number }[];
+  clientName?: string;
+  clientContact?: string;
+  clientCuit?: string;
+  clientEmail?: string;
+  clientPhone?: string;
+  clientNotes?: string;
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
@@ -87,14 +106,21 @@ export async function createObra(input: CreateObraInput): Promise<any> {
     address: input.direccion,
     startDate: input.inicio || undefined,
     endDate: input.fin || undefined,
-    city: "CABA",
-    province: "CABA",
+    city: input.ciudad || "",
+    province: input.provincia || "",
+    zip: input.zip,
+    country: input.pais,
+    status: input.status || "planificacion",
     myRole: "director",
-    presupuestoTotal: 1_000_000,
-    rubros: [{ nombre: "Rubro general", presupuesto: 50_000 },
-      { nombre: "Rubro secundario", presupuesto: 950_000 }
-    ],
-    team: [],
+    presupuestoTotal: input.presupuestoTotal ?? 1_000_000,
+    rubros: input.rubros || [],
+    team: input.team.map((t) => t.name),
+    clientName: input.clientName,
+    clientContact: input.clientContact,
+    clientCuit: input.clientCuit,
+    clientEmail: input.clientEmail,
+    clientPhone: input.clientPhone,
+    clientNotes: input.clientNotes,
   };
 
   const res = await fetch(`${API_URL}/obras/obras`, {

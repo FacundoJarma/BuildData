@@ -22,13 +22,13 @@ const TYPE_ICONS: Record<string, React.ReactNode> = {
   truck: <TruckIcon />,
 };
 
-export function Step1({ data, setData }: { data: any; setData: (d: any) => void }) {
+export function Step1({ data, setData, errors = {} }: { data: any; setData: (d: any) => void; errors?: Record<string, string> }) {
   return (
     <div className="space-y-5">
       <div>
         <div className="text-[10px] tracking-[0.06em] uppercase font-bold text-slate-500 mb-3">Información básica</div>
         <div className="grid grid-cols-2 gap-4">
-          <WField label="Nombre de la obra*" hint="Ej: Edificio Belgrano, Casa Villa Urquiza…" span={2}>
+          <WField label="Nombre de la obra*" hint="Ej: Edificio Belgrano, Casa Villa Urquiza…" span={2} error={errors.name}>
             <WInput value={data.name} onChange={(e: any) => setData({ ...data, name: e.target.value })} placeholder="Nombre que ve todo el equipo" />
           </WField>
           <WField label="Código interno" hint="Opcional · para referencias con proveedores.">
@@ -51,6 +51,14 @@ export function Step1({ data, setData }: { data: any; setData: (d: any) => void 
               icon={TYPE_ICONS[t.icon]} name={t.name} sub={t.sub} />
           ))}
         </div>
+        {errors.type && (
+          <span className="text-[11px] font-semibold text-[#B91C1C] flex items-center gap-1 mt-2">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="flex-none">
+              <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            {errors.type}
+          </span>
+        )}
       </div>
     </div>
   );

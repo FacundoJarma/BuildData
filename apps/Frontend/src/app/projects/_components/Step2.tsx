@@ -5,13 +5,13 @@ import { WField } from "./WField";
 import { WInput } from "./WInput";
 import { WSelect } from "./WSelect";
 
-export function Step2({ data, setData }: { data: any; setData: (d: any) => void }) {
+export function Step2({ data, setData, errors = {} }: { data: any; setData: (d: any) => void; errors?: Record<string, string> }) {
   return (
     <div className="space-y-5">
       <div>
         <div className="text-[10px] tracking-[0.06em] uppercase font-bold text-slate-500 mb-3">Dirección de obra</div>
         <div className="grid grid-cols-3 gap-4">
-          <WField label="Dirección*" span={2}>
+          <WField label="Dirección*" span={2} error={errors.address}>
             <WInput value={data.address} onChange={(e: any) => setData({ ...data, address: e.target.value })} placeholder="Av. Belgrano 1842" />
           </WField>
           <WField label="Localidad">

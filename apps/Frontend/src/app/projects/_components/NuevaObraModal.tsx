@@ -1,34 +1,77 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Xmark, ArrowRight, CircleExclamation } from "@gravity-ui/icons";
-import { NewStep1Type } from "./NewStep1Type";
-import { NewStep2Data } from "./NewStep2Data";
-import { NewStep3Team } from "./NewStep3Team";
-import { NewStep4WhatsApp } from "./NewStep4WhatsApp";
-import { NewSuccessState } from "./NewSuccessState";
-import Button from "@/components/ui/Button";
+import { Xmark, ArrowRight, CircleExclamation, CircleInfo } from "@gravity-ui/icons";
+import { Step1 } from "./Step1";
+import { Step2 } from "./Step2";
+import { Step3 } from "./Step3";
+import { Step4 } from "./Step4";
+import { Step5 } from "./Step5";
+import { Step6 } from "./Step6";
+import { SuccessState } from "./SuccessState";
+import { DEFAULT_RUBROS, STEPS, PERSON_MAP } from "@/app/projects/data/wizard";
 import { createObra } from "@/services/projectsService";
 
-const totalSteps = 4;
+const totalSteps = STEPS.length;
 
-const STEP_INFO = [
-  { title: "Empecemos con lo básico",      sub: "Elegí el tipo y cómo querés arrancar." },
-  { title: "Datos de la obra",             sub: "Información mínima para empezar. Podés ajustar todo después." },
-  { title: "Sumá a tu equipo",             sub: "Capataces, compras, dirección. Podés agregar más después." },
-  { title: "Conectá WhatsApp",             sub: "Tu equipo reporta por WhatsApp y BuildData lo organiza acá." },
-];
+const makeRubros = () =>
+  DEFAULT_RUBROS.map((name, i) => ({ id: "r" + i + "-" + Date.now(), name, amount: "" }));
+
+const validateStep = (step: number, data: any): Record<string, string> => {
+  const e: Record<string, string> = {};
+  if (step === 1) {
+    if (!data.name.trim()) e.name = "El nombre de la obra es obligatorio";
+    else if (data.name.trim().length < 2) e.name = "El nombre debe tener al menos 2 caracteres";
+    if (!data.type) e.type = "Seleccioná un tipo de obra";
+  }
+  if (step === 2) {
+    if (!data.address.trim()) e.address = "La dirección es obligatoria";
+  }
+  if (step === 3) {
+    if (!data.team.length) e.team = "Seleccioná al menos una persona del equipo";
+  }
+  if (step === 4) {
+    if (data.startDate && data.endDate && data.endDate < data.startDate) {
+      e.endDate = "La fecha de fin no puede ser anterior al inicio";
+    }
+  }
+  if (step === 5) {
+    if (!data.client.name.trim()) e.clientName = "El nombre del cliente es obligatorio";
+    if (data.client.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.client.email)) {
+      e.clientEmail = "El email no es válido";
+    }
+    if (data.client.phone && data.client.phone.replace(/[\s\-\(\)]/g, "").length < 8) {
+      e.clientPhone = "El teléfono parece incompleto";
+    }
+  }
+  if (step === 6) {
+    const total = Number(data.budgetTotal) || 0;
+    if (total <= 0) e.budgetTotal = "El presupuesto total debe ser mayor a cero";
+    const hasNamedRubro = (data.rubros || []).some((r: any) => r.name.trim());
+    if (!hasNamedRubro) e.rubros = "Agregá al menos un rubro con nombre";
+    const sum = (data.rubros || []).reduce((a: number, r: any) => a + (Number(r.amount) || 0), 0);
+    if (sum > total) e.budgetOver = "La suma de rubros supera el presupuesto total";
+  }
+  return e;
+};
 
 const INITIAL_DATA = {
-  tipo: "edificio",
-  plantilla: "plantilla",
-  nombre: "",
-  codigo: "",
-  direccion: "",
-  inicio: "",
-  fin: "",
-  team: [],
-  waConnect: false,
+  name: "",
+  code: "",
+  status: "planificacion",
+  type: "",
+  address: "",
+  city: "",
+  province: "",
+  zip: "",
+  country: "ar",
+  team: ["JM"],
+  teamRoles: { JM: "Director de obra" } as Record<string, string>,
+  startDate: "",
+  endDate: "",
+  client: { name: "", contact: "", cuit: "", email: "", phone: "", notes: "" },
+  budgetTotal: "",
+  rubros: makeRubros(),
 };
 
 export function NuevaObraModal({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -36,18 +79,58 @@ export function NuevaObraModal({ open, onClose }: { open: boolean; onClose: () =
   const [data, setData] = useState(INITIAL_DATA);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [obraCreated, setObraCreated] = useState<any>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (open) { setStep(1); setData(INITIAL_DATA); setError(""); setObraCreated(null); }
+    if (open) { setStep(1); setData(INITIAL_DATA); setError(""); setErrors({}); }
   }, [open]);
+
+  const setDataAndClear = (d: any) => { setData(d); setErrors({}); };
+
+  const handleNext = () => {
+    const v = validateStep(step, data);
+    if (Object.keys(v).length > 0) { setErrors(v); return; }
+    setErrors({});
+    if (step === totalSteps) handleCreate();
+    else setStep(step + 1);
+  };
 
   const handleCreate = async () => {
     setLoading(true);
     setError("");
     try {
-      const obra = await createObra(data);
-      setObraCreated(obra);
+      const mapped = {
+        nombre: data.name,
+        codigo: data.code,
+        tipo: data.type,
+        status: data.status,
+        plantilla: "plantilla",
+        direccion: data.address + (data.city ? ", " + data.city : ""),
+        ciudad: data.city,
+        provincia: data.province,
+        zip: data.zip,
+        pais: data.country,
+        inicio: data.startDate,
+        fin: data.endDate,
+        team: data.team.map((id: string) => {
+          const person = PERSON_MAP[id];
+          return {
+            name: person?.name || id,
+            phone: "",
+            role: data.teamRoles?.[id] || person?.role || "",
+          };
+        }),
+        waConnect: false,
+        presupuestoTotal: Number(data.budgetTotal) || 0,
+        rubros: (data.rubros || []).map((r: any) => ({ nombre: r.name, presupuesto: Number(r.amount) || 0 })),
+        clientName: data.client.name,
+        clientContact: data.client.contact,
+        clientCuit: data.client.cuit,
+        clientEmail: data.client.email,
+        clientPhone: data.client.phone,
+        clientNotes: data.client.notes,
+      };
+      await createObra(mapped);
       setStep(step + 1);
     } catch (e: any) {
       setError(e.message || "Error al crear obra");
@@ -73,82 +156,122 @@ export function NuevaObraModal({ open, onClose }: { open: boolean; onClose: () =
 
   if (!open) return null;
 
+  const budgetTotal = Number(data.budgetTotal) || 0;
+  const budgetSum = (data.rubros || []).reduce((a: number, r: any) => a + (Number(r.amount) || 0), 0);
+
   const canNext = (() => {
-    if (step === 1) return !!(data.tipo && data.plantilla);
-    if (step === 2) return data.nombre.trim().length > 1;
+    if (step === 1) return !!(data.name.trim() && data.type);
+    if (step === 2) return !!data.address.trim();
     if (step === 3) return true;
     if (step === 4) return true;
+    if (step === 5) return !!(data.client.name.trim());
+    if (step === 6) return budgetTotal > 0 && budgetSum <= budgetTotal;
     return false;
   })();
 
-  const info = STEP_INFO[step - 1];
-
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-fade-in" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-big w-full max-w-[820px] max-h-[90vh] flex flex-col overflow-hidden animate-modal-in" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white w-full max-w-[900px] max-h-[calc(100vh-32px)] rounded-2xl shadow-big overflow-hidden flex flex-col animate-modal-in" onClick={(e) => e.stopPropagation()}>
 
-        {/* Header */}
-        <div className="px-7 pt-6 pb-4 border-b border-slate-200 flex items-start justify-between gap-4 flex-none">
-          <div className="min-w-0">
-            <div className="text-[10px] tracking-[0.08em] uppercase font-bold text-primary mb-1">
-              {step <= totalSteps ? `Paso ${step} de ${totalSteps}` : "¡Listo!"}
-            </div>
-            <h2 className="text-[22px] font-extrabold display-tight text-slate-950 leading-tight">
-              {step <= totalSteps ? info.title : "¡Obra creada!"}
-            </h2>
-            <p className="text-[13px] text-slate-500 mt-1">
-              {step <= totalSteps ? info.sub : "Tu obra ya está lista. Llevátela al panel principal."}
-            </p>
-          </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-md text-slate-500 hover:text-slate-950 hover:bg-slate-100 flex items-center justify-center flex-none">
-            <Xmark width={16} height={16} />
-          </button>
-        </div>
-
-        {/* Progress dots */}
-        {step <= totalSteps && (
-          <div className="px-7 py-3 bg-slate-50 border-b border-slate-200 flex items-center gap-2 flex-none">
-            {[1, 2, 3, 4].map((s) => (
-              <div key={s} className={`h-[4px] rounded-full flex-1 transition-colors ${s <= step ? "bg-primary" : "bg-slate-200"}`} />
-            ))}
-          </div>
-        )}
-
-        {/* Body */}
-        <div className="flex-1 overflow-y-auto px-7 py-6">
-          {step === 1 && <NewStep1Type data={data} setData={setData} />}
-          {step === 2 && <NewStep2Data data={data} setData={setData} />}
-          {step === 3 && <NewStep3Team data={data} setData={setData} />}
-          {step === 4 && <NewStep4WhatsApp data={data} setData={setData} />}
-          {step === 5 && <NewSuccessState data={data} obra={obraCreated} onClose={onClose} />}
-        </div>
-
-        {/* Footer / actions */}
-        {step <= totalSteps && (
-          <div className="px-7 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-3 flex-none">
-            <button onClick={onClose} className="text-[12px] font-bold text-slate-500 hover:text-slate-950 px-3 py-2">
-              Cancelar
-            </button>
-            <div className="flex items-center gap-2">
-              {step > 1 && (
-                <Button variant="secondary" size="md" onClick={() => setStep(step - 1)}>
-                  Atrás
-                </Button>
-              )}
-              {error && (
-                <div className="flex items-center gap-2 text-[12px] font-semibold text-critical">
-                  <CircleExclamation width={14} height={14} />
-                  {error}
+        {step > totalSteps ? (
+          <SuccessState data={data} onClose={onClose} />
+        ) : (
+          <>
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 flex-none">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-md bg-primary-50 text-primary flex items-center justify-center">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
                 </div>
-              )}
-              <button
-                disabled={!canNext || loading}
-                onClick={step === totalSteps ? handleCreate : () => setStep(step + 1)}
-                className={`inline-flex items-center gap-2 font-bold rounded-md px-5 py-[10px] text-[13px] transition-colors ${canNext && !loading ? "bg-primary hover:bg-primary-700 text-white" : "bg-slate-300 text-white cursor-not-allowed"}`}>
-                {loading ? "Creando..." : step === totalSteps ? "Crear obra" : "Siguiente"} {!loading && <ArrowRight width={13} height={13} />}
+                <div>
+                  <div className="text-[15px] font-extrabold display-tight">Crear nueva obra</div>
+                  <div className="text-[11px] text-slate-500">Paso {step} de {totalSteps} · {STEPS[step - 1].label}</div>
+                </div>
+              </div>
+              <button onClick={onClose}
+                className="w-8 h-8 rounded-md hover:bg-slate-100 text-slate-500 hover:text-slate-950 flex items-center justify-center">
+                <Xmark width={16} height={16} />
               </button>
             </div>
-          </div>
+
+            {/* Body with vertical rail */}
+            <div className="flex flex-1 min-h-0 overflow-hidden">
+              {/* Left rail */}
+              <div className="w-[220px] bg-slate-50 border-r border-slate-200 p-4 flex flex-col gap-1 flex-none">
+                {STEPS.map((s) => {
+                  const isDone = s.id < step;
+                  const isCurrent = s.id === step;
+                  return (
+                    <button key={s.id} type="button" onClick={() => isDone && setStep(s.id)}
+                      className={`flex items-start gap-3 px-3 py-[10px] rounded-md text-left transition-colors
+                        ${isCurrent ? "bg-white shadow-card border border-slate-200" : "border border-transparent"}
+                        ${isDone ? "hover:bg-white cursor-pointer" : !isCurrent ? "opacity-60 cursor-default" : ""}`}>
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold flex-none
+                        ${isDone ? "bg-success text-white" : isCurrent ? "bg-primary text-white" : "bg-slate-200 text-slate-600"}`}>
+                        {isDone ? (
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        ) : s.id}
+                      </div>
+                      <div className="min-w-0">
+                        <div className={`text-[12px] font-bold leading-tight ${isCurrent ? "text-slate-950" : "text-slate-700"}`}>{s.label}</div>
+                        <div className="text-[10px] text-slate-500 leading-snug mt-[1px]">{s.sub}</div>
+                      </div>
+                    </button>
+                  );
+                })}
+
+                <div className="mt-auto pt-3">
+                  <div className="bg-white border border-slate-200 rounded-md p-3 text-[11px] text-slate-600 leading-snug">
+                    <div className="flex items-center gap-1 font-bold text-slate-950 mb-1">
+                      <CircleInfo width={12} height={12} className="text-primary" /> Podés editar todo después.
+                    </div>
+                    Ningún paso es definitivo. Cambiás equipo, fechas o cronograma cuando quieras.
+                  </div>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 overflow-y-auto p-6">
+                {step === 1 && <Step1 data={data} setData={setDataAndClear} errors={errors} />}
+                {step === 2 && <Step2 data={data} setData={setDataAndClear} errors={errors} />}
+                {step === 3 && <Step3 data={data} setData={setDataAndClear} errors={errors} />}
+                {step === 4 && <Step4 data={data} setData={setDataAndClear} errors={errors} />}
+                {step === 5 && <Step5 data={data} setData={setDataAndClear} errors={errors} />}
+                {step === 6 && <Step6 data={data} setData={setDataAndClear} errors={errors} />}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="border-t border-slate-200 px-6 py-3 flex items-center justify-between bg-slate-50 flex-none">
+              <button onClick={onClose}
+                className="text-[12px] font-bold text-slate-600 hover:text-slate-950 px-3 py-[8px]">
+                Cancelar
+              </button>
+              <div className="flex items-center gap-2">
+                {step > 1 && (
+                  <button onClick={() => setStep(step - 1)}
+                    className="text-[13px] font-bold bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-md px-4 py-[9px]">
+                    Atrás
+                  </button>
+                )}
+                {error && (
+                  <div className="flex items-center gap-2 text-[12px] font-semibold text-critical">
+                    <CircleExclamation width={14} height={14} />
+                    {error}
+                  </div>
+                )}
+                <button onClick={handleNext} disabled={!canNext || loading}
+                  className={`inline-flex items-center gap-2 text-[13px] font-bold rounded-md px-4 py-[9px] transition-colors
+                    ${canNext && !loading ? "bg-primary hover:bg-primary-700 text-white" : "bg-slate-200 text-slate-500 cursor-not-allowed"}`}>
+                  {loading ? "Creando..." : step === totalSteps ? <>Crear obra <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg></> : <>Siguiente <ArrowRight width={14} height={14} /></>}
+                </button>
+              </div>
+            </div>
+          </>
         )}
       </div>
     </div>
