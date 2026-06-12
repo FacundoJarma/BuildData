@@ -1,3 +1,4 @@
+import { supabase } from "@/lib/supabaseClient";
 import type { ApiDashboardResponse } from "@/types/dashboard.api";
 import type { DashboardData } from "@/types/dashboard";
 
@@ -48,7 +49,6 @@ function transformDashboard(api: ApiDashboardResponse): DashboardData {
   return {
     obra: {
       name:       api.obra.name,
-      sector:     api.obra.sector,
       lastUpdate: formatRelativeTime(api.obra.lastUpdate),
     },
 
@@ -109,108 +109,22 @@ function transformDashboard(api: ApiDashboardResponse): DashboardData {
   };
 }
 
-// ─── Mock ─────────────────────────────────────────────────────────────────────
-// Refleja exactamente lo que devolverá el backend (tipos ApiDashboardResponse).
-// Cuando se conecte la API real, borrar esto y descomentar el fetch de abajo.
-
-const MOCK: ApiDashboardResponse = {
-  obra: {
-    name:       "Edificio Belgrano",
-    sector:     "Sector C",
-    lastUpdate: new Date(Date.now() - 12 * 60_000).toISOString(), // hace 12 min
-  },
-  stats: {
-    avanceTotal:       68,
-    avanceDeltaPct:    4,
-    alertasCriticas:   2,
-    alertasDeltaHoy:   1,
-    pedidos:           7,
-    pedidosPendientes: 3,
-    tareasCompletadas: 9,
-    tareasTotal:       12,
-  },
-  budget: {
-    total:           124_000_000,
-    ejecutado:       81_000_000,
-    disponible:      43_000_000,
-    ejecutadoPct:    65,
-    comprometidoPct: 12,
-    librePct:        23,
-    updatedAt:       new Date().toISOString(),
-  },
-  budgetBreakdown: [
-    { name: "Hormigón armado", spent: 38_000_000, cap: 52_000_000 },
-    { name: "Mampostería",     spent: 21_000_000, cap: 20_000_000 }, // over → lo calcula transform
-    { name: "Terminaciones",   spent:  6_000_000, cap: 28_000_000 },
-  ],
-  tradeProgress: [
-    { name: "Mampostería",                pct: 88 },
-    { name: "Hormigón armado",            pct: 62 },
-    { name: "Instalaciones eléctricas",   pct: 46 },
-    { name: "Instalaciones sanitarias",   pct: 58 },
-    { name: "Terminaciones",              pct: 24 },
-  ],
-  activityFeed: [
-    {
-      initials:  "JM",
-      name:      "J. Méndez",
-      action:    "Marcó completada Hormigonado losa +3",
-      timestamp: new Date(new Date().setHours(8, 42)).toISOString(),
-    },
-    {
-      initials:  "CR",
-      name:      "C. Ríos",
-      action:    "Subió 4 fotos del Sector C",
-      timestamp: new Date(new Date().setHours(10, 15)).toISOString(),
-    },
-    {
-      initials:  "LB",
-      name:      "L. Benítez",
-      action:    "Pedido de cemento aprobado",
-      timestamp: new Date(new Date().setHours(11, 30)).toISOString(),
-    },
-    {
-      initials:  "PS",
-      name:      "P. Salas",
-      action:    "Reportó falla en Grúa Torre 2",
-      timestamp: new Date(new Date().setHours(12, 48)).toISOString(),
-    },
-  ],
-  alerts: [
-    {
-      id:        "a1",
-      title:     "Falla en Grúa Torre 2",
-      subtitle:  "Sector C · J. Méndez",
-      timestamp: new Date(Date.now() - 12 * 60_000).toISOString(),
-      severity:  "critical",
-    },
-    {
-      id:        "a2",
-      title:     "Faltante: hierro 12 mm",
-      subtitle:  "Pedido sin aprobar",
-      timestamp: new Date(Date.now() - 2 * 3_600_000).toISOString(),
-      severity:  "critical",
-    },
-    {
-      id:        "a3",
-      title:     "Demora en hormigón",
-      subtitle:  "Sector B · 3 días",
-      timestamp: new Date(Date.now() - 24 * 3_600_000).toISOString(),
-      severity:  "attention",
-    },
-  ],
-};
-
 // ─── Export público ───────────────────────────────────────────────────────────
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
 export async function getDashboard(obraId: string): Promise<DashboardData> {
-  void obraId;
+  const { data: { session } } = await supabase.auth.getSession();
 
-  // TODO: cuando el backend esté listo, reemplazar las dos líneas de abajo por:
-  // const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/obras/${obraId}/dashboard`);
-  // if (!res.ok) throw new Error(`Dashboard fetch failed: ${res.status}`);
-  // const data: ApiDashboardResponse = await res.json();
-  // return transformDashboard(data);
+  const res = await fetch(`${API_URL}/dashboard/${obraId}`, {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session?.access_token || ""}`,
+    },
+  });
 
-  return transformDashboard(MOCK);
+  if (!res.ok) throw new Error(`Dashboard fetch failed: ${res.status}`);
+
+  const data: ApiDashboardResponse = await res.json();
+  return transformDashboard(data);
 }

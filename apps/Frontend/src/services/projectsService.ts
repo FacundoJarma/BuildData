@@ -73,7 +73,7 @@ export async function getObras(): Promise<Obra[]> {
     address: o.address,
     type: o.type,
     status: o.status,
-    progress: 50,
+    progress: o.progress ?? 0,
     alerts: o.alerts ?? 0,
     pedidos: o.pedidos ?? 0,
     team: (o.team || []).map((t: any) => t.initials),

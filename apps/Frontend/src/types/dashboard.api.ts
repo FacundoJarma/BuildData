@@ -11,7 +11,6 @@ export interface ApiDashboardResponse {
 
 export interface ApiObraInfo {
   name: string;
-  sector: string;
   lastUpdate: string; // ISO 8601 — ej: "2025-05-20T10:32:00Z"
 }
 

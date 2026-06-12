@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   DashboardContent,
   EmptyDashboardContent,
@@ -8,14 +9,25 @@ import {
 import type { DashboardData } from "@/types/dashboard";
 import { getDashboard } from "@/services/dashboardService";
 
-export default function DashboardPage() {
+function DashboardInner() {
+  const searchParams = useSearchParams();
+  const obraId = searchParams.get("id");
+
   const [data, setData] = useState<DashboardData | null>(null);
 
   useEffect(() => {
-    getDashboard("belgrano").then(setData);
-  }, []);
+    if (obraId) getDashboard(obraId).then(setData);
+  }, [obraId]);
 
   if (!data) return <EmptyDashboardContent />;
 
   return <DashboardContent data={data} />;
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<EmptyDashboardContent />}>
+      <DashboardInner />
+    </Suspense>
+  );
 }

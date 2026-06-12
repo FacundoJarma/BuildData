@@ -10,7 +10,6 @@ export interface DashboardData {
 
 export interface ObraInfo {
   name: string;
-  sector: string;
   lastUpdate: string;
 }
 
