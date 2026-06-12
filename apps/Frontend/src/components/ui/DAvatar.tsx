@@ -1,3 +1,5 @@
+import { useAuth } from "@/contexts/AuthContext";
+
 const PALETTE: Record<string, string> = {
   JM: "from-primary to-info",
   CR: "from-info to-[#22C55E]",
@@ -8,13 +10,25 @@ const PALETTE: Record<string, string> = {
   MR: "from-primary to-accent",
 };
 
+export function getInitials(name?: string | null): string {
+  if (!name) return "?";
+  return name
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
+
 export function DAvatar({
-  initials,
+  initials: explicitInitials,
   size = 32,
 }: {
-  initials: string;
+  initials?: string;
   size?: number;
 }) {
+  const { profile } = useAuth();
+  const initials = explicitInitials ?? getInitials(profile?.nombre as string);
   const grad = PALETTE[initials] || "from-primary to-info";
   return (
     <div

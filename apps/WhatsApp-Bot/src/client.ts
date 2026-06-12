@@ -23,7 +23,7 @@ export async function initClient() {
       executablePath: isProduction
         ? "./puppeteer_data/chrome/linux-146.0.7680.31/chrome-linux64/chrome"
         : undefined,
-      args: isProduction ? ["--no-sandbox", "--disable-setuid-sandbox"] : [],
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
     },
   });
 

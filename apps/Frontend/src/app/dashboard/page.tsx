@@ -1,7 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { DashboardContent, EmptyDashboardContent } from "@/app/dashboard/_components";
+import {
+  DashboardContent,
+  EmptyDashboardContent,
+} from "@/app/dashboard/_components";
 import type { DashboardData } from "@/types/dashboard";
 import { getDashboard } from "@/services/dashboardService";
 

@@ -28,13 +28,21 @@ interface Props {
 }
 
 export function DashboardContent({ data }: Props) {
-  const { obra, stats, budget, budgetBreakdown, tradeProgress, activityFeed, alerts } = data;
+  const {
+    obra,
+    stats,
+    budget,
+    budgetBreakdown,
+    tradeProgress,
+    activityFeed,
+    alerts,
+  } = data;
 
   return (
     <>
       <DPageHeader
         title="Dashboard"
-        subtitle={`${obra.name} · ${obra.sector} · actualizado ${obra.lastUpdate}`}
+        subtitle={`s${obra.name} · ${obra.sector} · actualizado ${obra.lastUpdate}`}
         right={
           <>
             <Button
@@ -44,7 +52,11 @@ export function DashboardContent({ data }: Props) {
             >
               Exportar
             </Button>
-            <Button variant="primary" size="sm" icon={<Plus width={13} height={13} />}>
+            <Button
+              variant="primary"
+              size="sm"
+              icon={<Plus width={13} height={13} />}
+            >
               Nuevo reporte
             </Button>
           </>
@@ -101,7 +113,9 @@ export function DashboardContent({ data }: Props) {
             <span className="inline-flex items-center gap-1 bg-accent/20 text-accent text-[9px] font-bold tracking-wider uppercase px-2 py-[3px] rounded">
               <ChartBar width={10} height={10} /> Presupuesto
             </span>
-            <span className="text-[10px] text-white/60">Actualizado {budget.updatedAt}</span>
+            <span className="text-[10px] text-white/60">
+              Actualizado {budget.updatedAt}
+            </span>
           </div>
 
           <div className="grid grid-cols-3 gap-3 mb-4">
@@ -120,7 +134,9 @@ export function DashboardContent({ data }: Props) {
               <div className="text-[18px] font-extrabold display-tight tnum text-white leading-tight">
                 {formatCurrency(budget.ejecutado)}
               </div>
-              <div className="text-[10px] font-semibold text-white/60">{budget.ejecutadoPct} %</div>
+              <div className="text-[10px] font-semibold text-white/60">
+                {budget.ejecutadoPct} %
+              </div>
             </div>
             <div>
               <div className="text-[9px] tracking-[0.06em] uppercase font-bold text-white/55">
@@ -129,37 +145,54 @@ export function DashboardContent({ data }: Props) {
               <div className="text-[18px] font-extrabold display-tight tnum text-accent leading-tight">
                 {formatCurrency(budget.disponible)}
               </div>
-              <div className="text-[10px] font-semibold text-accent/80">{budget.librePct} %</div>
+              <div className="text-[10px] font-semibold text-accent/80">
+                {budget.librePct} %
+              </div>
             </div>
           </div>
 
           <div className="mb-2">
             <div className="h-[10px] w-full rounded-full overflow-hidden flex bg-white/10">
-              <div style={{ width: `${budget.ejecutadoPct}%` }} className="h-full bg-accent" />
-              <div style={{ width: `${budget.comprometidoPct}%` }} className="h-full bg-accent/55" />
+              <div
+                style={{ width: `${budget.ejecutadoPct}%` }}
+                className="h-full bg-accent"
+              />
+              <div
+                style={{ width: `${budget.comprometidoPct}%` }}
+                className="h-full bg-accent/55"
+              />
             </div>
             <div className="flex items-center gap-4 mt-2 text-[10px] text-white/65">
               <span className="inline-flex items-center gap-[6px]">
-                <span className="w-2 h-2 rounded-full bg-accent" /> Ejecutado {budget.ejecutadoPct} %
+                <span className="w-2 h-2 rounded-full bg-accent" /> Ejecutado{" "}
+                {budget.ejecutadoPct} %
               </span>
               <span className="inline-flex items-center gap-[6px]">
-                <span className="w-2 h-2 rounded-full bg-accent/55" /> Comprometido {budget.comprometidoPct} %
+                <span className="w-2 h-2 rounded-full bg-accent/55" />{" "}
+                Comprometido {budget.comprometidoPct} %
               </span>
               <span className="inline-flex items-center gap-[6px]">
-                <span className="w-2 h-2 rounded-full bg-white/15" /> Libre {budget.librePct} %
+                <span className="w-2 h-2 rounded-full bg-white/15" /> Libre{" "}
+                {budget.librePct} %
               </span>
             </div>
           </div>
 
           <div className="border-t border-white/10 pt-3 space-y-[6px] mb-4">
             {budgetBreakdown.map((r) => (
-              <div key={r.name} className="grid grid-cols-[1fr_auto] items-center text-[11px]">
+              <div
+                key={r.name}
+                className="grid grid-cols-[1fr_auto] items-center text-[11px]"
+              >
                 <div className="text-white/85 truncate">{r.name}</div>
                 <div className="tnum font-semibold">
                   <span className={r.over ? "text-critical" : "text-white"}>
                     {formatCurrency(r.spent)}
                   </span>
-                  <span className="text-white/45"> / {formatCurrency(r.cap)}</span>
+                  <span className="text-white/45">
+                    {" "}
+                    / {formatCurrency(r.cap)}
+                  </span>
                   {r.over && (
                     <span className="ml-2 text-[9px] font-bold tracking-wider text-critical bg-critical/20 px-[5px] py-[1px] rounded">
                       +{r.overPct} %
@@ -174,7 +207,11 @@ export function DashboardContent({ data }: Props) {
             <Button variant="accent" size="sm">
               Ver desglose
             </Button>
-            <Button variant="ghost" size="sm" className="text-white hover:bg-white/10">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-white hover:bg-white/10"
+            >
               Exportar
             </Button>
           </div>

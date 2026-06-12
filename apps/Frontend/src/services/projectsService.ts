@@ -1,108 +1,68 @@
 import type { Obra, FileItem } from "@/types/projects";
+import { supabase } from "@/lib/supabaseClient";
+
+export interface CreateObraInput {
+  tipo: string;
+  plantilla: string;
+  nombre: string;
+  codigo: string;
+  direccion: string;
+  inicio: string;
+  fin: string;
+  team: { name: string; phone: string; role: string }[];
+  waConnect: boolean;
+}
+
+interface CreateObraPayload {
+  name: string;
+  code: string;
+  type: string;
+  address: string;
+  city: string;
+  province: string;
+  zip?: string;
+  country?: string;
+  startDate?: string;
+  endDate?: string;
+  status?: string;
+  myRole: string;
+  team?: string[];
+  presupuestoTotal: number;
+  rubros: { nombre: string; presupuesto?: number }[];
+}
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 export async function getObras(): Promise<Obra[]> {
-  // TODO: Reemplazar con llamada real a la API
-  // const res = await fetch(`${API_URL}/obras`);
-  // return res.json();
+  const { data: { session } } = await supabase.auth.getSession();
 
-  return [
-    {
-      id: "belgrano",
-      name: "Edificio Belgrano",
-      code: "OBR-2025-014",
-      address: "Av. Belgrano 1842, CABA",
-      type: "Edificio en altura",
-      status: "en-curso",
-      progress: 68,
-      alerts: 2,
-      pedidos: 7,
-      team: ["JM", "CR", "PS", "LB", "MO"],
-      lastActivity: "hace 12 min",
-      lastActivityWho: "P. Salas reportó falla en grúa",
-      starred: true,
-      color: "#0F4395",
+  const res = await fetch(`${API_URL}/obras/obras`, {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session?.access_token || ""}`,
     },
-    {
-      id: "palermo",
-      name: "Torre Palermo Norte",
-      code: "OBR-2025-008",
-      address: "Av. Santa Fe 4920, CABA",
-      type: "Edificio en altura",
-      status: "en-curso",
-      progress: 42,
-      alerts: 0,
-      pedidos: 3,
-      team: ["AG", "CR", "LB"],
-      lastActivity: "hace 1 h",
-      lastActivityWho: "C. Ríos subió 6 fotos",
-      starred: true,
-      color: "#0B3275",
-    },
-    {
-      id: "villa-urquiza",
-      name: "Casa Villa Urquiza",
-      code: "OBR-2025-019",
-      address: "Bauness 2104, CABA",
-      type: "Vivienda unifamiliar",
-      status: "planificacion",
-      progress: 8,
-      alerts: 1,
-      pedidos: 2,
-      team: ["JM", "AG"],
-      lastActivity: "ayer 18:30",
-      lastActivityWho: "A. Gómez cargó planos",
-      starred: false,
-      color: "#F59E0B",
-    },
-    {
-      id: "oficinas-pilar",
-      name: "Oficinas Pilar",
-      code: "OBR-2024-031",
-      address: "Ruta 8 km 49, Pilar",
-      type: "Comercial / industrial",
-      status: "en-curso",
-      progress: 84,
-      alerts: 0,
-      pedidos: 1,
-      team: ["JM", "MO", "LB", "PS", "CR", "AG"],
-      lastActivity: "hoy 09:14",
-      lastActivityWho: "L. Benítez aprobó pedido",
-      starred: false,
-      color: "#22C55E",
-    },
-    {
-      id: "refaccion-recoleta",
-      name: "Refacción Recoleta",
-      code: "OBR-2024-022",
-      address: "Junín 1410, CABA",
-      type: "Refacción",
-      status: "pausada",
-      progress: 55,
-      alerts: 3,
-      pedidos: 0,
-      team: ["MO", "PS"],
-      lastActivity: "hace 5 días",
-      lastActivityWho: "Obra en pausa por cliente",
-      starred: false,
-      color: "#94A3B8",
-    },
-    {
-      id: "casa-tigre",
-      name: "Casa de Fin de Semana · Tigre",
-      code: "OBR-2024-007",
-      address: "Canal San Fernando 280",
-      type: "Vivienda unifamiliar",
-      status: "finalizada",
-      progress: 100,
-      alerts: 0,
-      pedidos: 0,
-      team: ["JM", "AG", "CR"],
-      lastActivity: "12 Mar 2025",
-      lastActivityWho: "Entregada al cliente",
-      starred: false,
-      color: "#1A2238",
-    },
-  ];
+  });
+
+  if (!res.ok) throw new Error("Error al obtener obras");
+
+  const json = await res.json();
+
+  return (json.obras || []).map((o: any) => ({
+    id: String(o.id),
+    name: o.name,
+    code: o.code,
+    address: o.address,
+    type: o.type,
+    status: o.status,
+    progress: 50,
+    alerts: o.alerts ?? 0,
+    pedidos: o.pedidos ?? 0,
+    team: (o.team || []).map((t: any) => t.initials),
+    lastActivity: o.lastActivity || "",
+    lastActivityWho: o.lastActivityWho || "",
+    starred: o.starred || false,
+    color: "#0F4395",
+  }));
 }
 
 export async function getFiles(): Promise<FileItem[]> {
@@ -115,4 +75,41 @@ export async function getFiles(): Promise<FileItem[]> {
     { name: "Memoria descriptiva.docx", kind: "doc", obra: "Casa Villa Urquiza", when: "12 May", size: "420 KB" },
     { name: "Reporte_semanal_S20.pdf", kind: "pdf", obra: "Oficinas Pilar", when: "11 May", size: "900 KB" },
   ];
+}
+
+export async function createObra(input: CreateObraInput): Promise<any> {
+  const { data: { session } } = await supabase.auth.getSession();
+
+  const payload: CreateObraPayload = {
+    name: input.nombre,
+    code: input.codigo,
+    type: input.tipo,
+    address: input.direccion,
+    startDate: input.inicio || undefined,
+    endDate: input.fin || undefined,
+    city: "CABA",
+    province: "CABA",
+    myRole: "director",
+    presupuestoTotal: 1_000_000,
+    rubros: [{ nombre: "Rubro general", presupuesto: 50_000 },
+      { nombre: "Rubro secundario", presupuesto: 950_000 }
+    ],
+    team: [],
+  };
+
+  const res = await fetch(`${API_URL}/obras/obras`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session?.access_token || ""}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || "Error al crear obra");
+  }
+
+  return res.json();
 }

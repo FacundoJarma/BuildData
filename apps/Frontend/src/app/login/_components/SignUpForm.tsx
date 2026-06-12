@@ -1,17 +1,48 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight, CircleCheck, Envelope } from "@gravity-ui/icons";
+import { ArrowRight, CircleCheck, Envelope, Smartphone } from "@gravity-ui/icons";
+import { useAuth } from "@/contexts/AuthContext";
 import FormInput from "@/components/ui/FormInput";
 import Button from "@/components/ui/Button";
 
 interface SignUpFormProps {
   showSocial: boolean;
   onSwitch: () => void;
+  onSuccess: (mensaje: string) => void;
 }
 
-export default function SignUpForm({ showSocial, onSwitch }: SignUpFormProps) {
+export default function SignUpForm({
+  showSocial,
+  onSwitch,
+  onSuccess,
+}: SignUpFormProps) {
+  const { register } = useAuth();
   const [showPw, setShowPw] = useState(false);
+  const [nombre, setNombre] = useState("");
+  const [apellido, setApellido] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [telefono, setTelefono] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setIsLoading(true);
+    try {
+      const fullName = `${nombre} ${apellido}`.trim();
+      const result = await register(email, password, fullName, telefono || undefined);
+      onSuccess(result.mensaje || "Revisá tu email para confirmar la cuenta");
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Error al registrarse";
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   return (
     <div className="flex flex-col p-8 lg:p-12 overflow-y-auto">
@@ -35,7 +66,7 @@ export default function SignUpForm({ showSocial, onSwitch }: SignUpFormProps) {
         {showSocial && (
           <>
             <div className="flex gap-2 mt-7 w-full">
-              <Button variant="outline" className="w-full">
+              <Button variant="outline" className="w-full" type="button">
                 <svg width="16" height="16" viewBox="0 0 24 24">
                   <path
                     d="M22.5 12.27c0-.79-.07-1.55-.2-2.27H12v4.3h5.9a5.05 5.05 0 0 1-2.19 3.31v2.75h3.54c2.07-1.91 3.25-4.72 3.25-8.09z"
@@ -56,7 +87,7 @@ export default function SignUpForm({ showSocial, onSwitch }: SignUpFormProps) {
                 </svg>
                 Google
               </Button>
-              <Button variant="outline" className="w-full">
+              <Button variant="outline" className="w-full" type="button">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="#25D366">
                   <path d="M.057 24l1.687-6.163a11.867 11.867 0 0 1-1.587-5.946C.16 5.335 5.495 0 12.05 0a11.817 11.817 0 0 1 8.413 3.488 11.824 11.824 0 0 1 3.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 0 1-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z" />
                 </svg>
@@ -73,16 +104,47 @@ export default function SignUpForm({ showSocial, onSwitch }: SignUpFormProps) {
           </>
         )}
 
-        <div className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 text-[12px] rounded-md p-3">
+              {error}
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-3">
-            <FormInput label="Nombre" placeholder="Juan" />
-            <FormInput label="Apellido" placeholder="Méndez" />
+            <FormInput
+              label="Nombre"
+              placeholder="Juan"
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+              required
+            />
+            <FormInput
+              label="Apellido"
+              placeholder="Méndez"
+              value={apellido}
+              onChange={(e) => setApellido(e.target.value)}
+              required
+            />
           </div>
 
           <FormInput
             label="Email"
             icon={<Envelope className="w-[15px] h-[15px]" />}
             placeholder="juan.mendez@constructora-norte.com.ar"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+
+          <FormInput
+            label="Teléfono (opcional)"
+            icon={<Smartphone className="w-[15px] h-[15px]" />}
+            placeholder="11 2345-6789"
+            type="tel"
+            value={telefono}
+            onChange={(e) => setTelefono(e.target.value)}
           />
 
           <FormInput
@@ -91,8 +153,12 @@ export default function SignUpForm({ showSocial, onSwitch }: SignUpFormProps) {
             icon={<CircleCheck className="w-[15px] h-[15px]" />}
             placeholder="••••••••••"
             hint="Mínimo 10 caracteres, con mayúscula y número."
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
             rightElement={
               <button
+                type="button"
                 onClick={() => setShowPw(!showPw)}
                 className="focus:outline-none"
               >
@@ -120,16 +186,20 @@ export default function SignUpForm({ showSocial, onSwitch }: SignUpFormProps) {
             </span>
           </label>
 
-          <Button href="/dashboard" className="w-full mt-2">
-            Crear cuenta y empezar <ArrowRight className="w-[14px] h-[14px]" />
+          <Button type="submit" className="w-full mt-2" disabled={isLoading}>
+            {isLoading
+              ? "Creando cuenta..."
+              : "Crear cuenta y empezar"}{" "}
+            {!isLoading && <ArrowRight className="w-[14px] h-[14px]" />}
           </Button>
-        </div>
+        </form>
 
         <div className="text-center mt-6 text-[12px] text-slate-500">
           ¿Ya tenés cuenta?{" "}
           <button
             onClick={onSwitch}
             className="text-primary font-bold hover:underline"
+            type="button"
           >
             Iniciar sesión
           </button>
