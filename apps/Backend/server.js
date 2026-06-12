@@ -11,7 +11,6 @@ import { getObras, crearObra, getObra, updateObra, deleteObra, toggleStarred } f
 import { getDashboard } from "./controllers/dashboardController.js";
 import { getTareas, crearTarea, updateTarea, deleteTarea } from "./controllers/tareasController.js";
 import { getAlertas, crearAlerta, resolverAlerta } from "./controllers/alertasController.js";
-import { getActividad } from "./controllers/actividadController.js";
 import { getMiembros, addMiembro, removeMiembro } from "./controllers/miembrosController.js";
 import { getRubros, crearRubro, updateRubro, deleteRubro } from "./controllers/rubrosController.js";
 import { getFiles, uploadFile, deleteFile } from "./controllers/archivosController.js";
