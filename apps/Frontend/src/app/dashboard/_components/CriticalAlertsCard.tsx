@@ -1,4 +1,6 @@
-import { CircleExclamation } from "@gravity-ui/icons";
+"use client";
+
+import { CircleExclamation, ChevronRight } from "@gravity-ui/icons";
 import { DCard } from "@/components/ui/DCard";
 import { DPill } from "@/components/ui/DPill";
 import Button from "@/components/ui/Button";
@@ -6,9 +8,11 @@ import type { AlertItem } from "@/types/dashboard";
 
 interface Props {
   alerts: AlertItem[];
+  onItemClick?: (alert: AlertItem) => void;
+  onViewAll?: () => void;
 }
 
-function CriticalAlertsCard({ alerts }: Props) {
+function CriticalAlertsCard({ alerts, onItemClick, onViewAll }: Props) {
   const criticalsAlertsCounter = alerts.filter(
     (a) => a.tone === "critical",
   ).length;
@@ -20,7 +24,11 @@ function CriticalAlertsCard({ alerts }: Props) {
       </div>
       <div className="divide-y divide-slate-200">
         {alerts.map((a, i) => (
-          <div key={i} className="px-4 py-3 flex items-start gap-3">
+          <button
+            key={i}
+            onClick={() => onItemClick?.(a)}
+            className="w-full px-4 py-3 flex items-start gap-3 hover:bg-slate-50 transition-colors text-left"
+          >
             <div
               className={`w-8 h-8 rounded-md flex items-center justify-center flex-none
                     ${a.tone === "critical" ? "bg-critical-50 text-[#B91C1C]" : "bg-attention-50 text-[#A16207]"}`}
@@ -35,14 +43,17 @@ function CriticalAlertsCard({ alerts }: Props) {
                 {a.subtitle} · hace {a.time}
               </div>
             </div>
-          </div>
+            <ChevronRight width={13} height={13} className="text-slate-300 mt-1 flex-none" />
+          </button>
         ))}
       </div>
-      <div className="p-3 border-t border-slate-200">
-        <Button variant="secondary" size="sm" className="w-full justify-center">
-          Ver todas las alertas
-        </Button>
-      </div>
+      {onViewAll && (
+        <div className="p-3 border-t border-slate-200">
+          <Button variant="secondary" size="sm" className="w-full justify-center" onClick={onViewAll}>
+            Ver todas las alertas
+          </Button>
+        </div>
+      )}
     </DCard>
   );
 }

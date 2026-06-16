@@ -116,7 +116,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 export async function getDashboard(obraId: string): Promise<DashboardData> {
   const { data: { session } } = await supabase.auth.getSession();
 
-  const res = await fetch(`${API_URL}/dashboard/${obraId}`, {
+  const res = await fetch(`${API_URL}/obras/${obraId}/dashboard`, {
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${session?.access_token || ""}`,

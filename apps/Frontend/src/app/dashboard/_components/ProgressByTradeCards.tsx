@@ -1,16 +1,18 @@
 "use client";
 
-import { useState } from "react";
 import { DCard } from "@/components/ui/DCard";
-import { Plus } from "@gravity-ui/icons";
+import { Plus, ChevronRight } from "@gravity-ui/icons";
 import type { TradeProgress } from "@/types/dashboard";
 import Button from "@/components/ui/Button";
 
 interface Props {
   data: TradeProgress[];
+  onItemClick?: (name: string) => void;
+  onNewCategory?: () => void;
+  onViewAll?: () => void;
 }
 
-function ProgressByTradeCards({ data }: Props) {
+function ProgressByTradeCards({ data, onItemClick, onNewCategory, onViewAll }: Props) {
   return (
     <DCard padding="p-0">
       <div className="px-5 py-3 border-b border-slate-200 flex items-center justify-between">
@@ -27,18 +29,21 @@ function ProgressByTradeCards({ data }: Props) {
           variant="secondary"
           size="sm"
           className="justify-center"
+          onClick={onNewCategory}
         >
           Nueva categoría
         </Button>
       </div>
-      <div className="p-5 space-y-3">
+      <div className="p-3 space-y-1">
         {data.map((r) => (
-          <div
+          <button
             key={r.name}
-            className="grid grid-cols-[160px_1fr_44px] gap-3 items-center"
+            onClick={() => onItemClick?.(r.name)}
+            className="w-full grid grid-cols-[170px_1fr_44px] gap-3 items-center px-2 py-2 rounded-md hover:bg-slate-50 transition-colors text-left group"
           >
-            <div className="text-[12px] font-semibold text-slate-800">
-              {r.name}
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="w-2 h-2 rounded-full flex-none" style={{ background: r.color }} />
+              <span className="text-[12px] font-semibold text-slate-800 truncate group-hover:text-primary transition-colors">{r.name}</span>
             </div>
             <div className="bg-slate-100 h-[8px] rounded-full overflow-hidden">
               <div
@@ -46,15 +51,20 @@ function ProgressByTradeCards({ data }: Props) {
                 className="h-full rounded-full"
               />
             </div>
-            <div className="text-[12px] font-bold text-right tnum">
-              {r.pct}%
+            <div className="flex items-center gap-1 justify-end">
+              <span className="text-[12px] font-bold tnum">{r.pct}%</span>
+              {onItemClick && <ChevronRight width={12} height={12} className="text-slate-300 group-hover:text-slate-500 transition-colors flex-none" />}
             </div>
-          </div>
+          </button>
         ))}
-        <Button variant="secondary" size="sm" className="w-full justify-center">
-          Ver todos los avances
-        </Button>
       </div>
+      {onViewAll && (
+        <div className="px-3 pb-3">
+          <Button variant="secondary" size="sm" className="w-full justify-center" onClick={onViewAll}>
+            Ver todos los avances
+          </Button>
+        </div>
+      )}
     </DCard>
   );
 }

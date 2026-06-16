@@ -43,7 +43,7 @@ export async function registerUser(
   name: string,
   obra_id: string
 ): Promise<User> {
-  return apiRequest<User>("POST", "/obreros/registrar", {
+  return apiRequest<User>("POST", "/bot/obreros/registrar", {
     telefono: phone,
     nombre: name,
     obra_id,
@@ -52,7 +52,7 @@ export async function registerUser(
 
 export async function getUserByPhone(phone: string): Promise<User | null> {
   try {
-    const data = await apiRequest<User>("GET", `/obreros/telefono/${phone}`);
+    const data = await apiRequest<User>("GET", `/bot/obreros/telefono/${phone}`);
     if (!data.obras || data.obras.length === 0) return null;
     return data;
   } catch (error) {

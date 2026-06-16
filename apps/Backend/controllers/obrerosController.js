@@ -51,19 +51,6 @@ export async function registrarObrero(req, res) {
   }
 }
 
-  const { nombre, telefono } = req.body;
-  if (!nombre) return res.status(400).json({ error: "nombre es requerido" });
-  try {
-    const result = await pool.query(
-      `INSERT INTO obreros (nombre, telefono) VALUES ($1, $2) RETURNING *`,
-      [nombre, telefono]
-    );
-    res.status(201).json(result.rows[0]);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: error.message });
-  }
-
 // POST /obreros/asignar-obra — vincular obrero a una obra con rol
 export async function asignarObraObrero(req, res) {
   const { obrero_id, obra_id, rol } = req.body;
@@ -91,6 +78,33 @@ export async function quitarObreroDeObra(req, res) {
       [obrero_id, obra_id]
     );
     res.json({ mensaje: "Obrero quitado de la obra" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
+}
+
+export async function getUserByPhone(req, res) {
+  const { phone } = req.params;
+  try {
+    const result = await pool.query(
+      `SELECT o.*, oo.obra_id, oo.rol, ob.nombre AS obra_nombre
+       FROM obreros o
+       JOIN obreros_obras oo ON o.id = oo.obrero_id
+       JOIN obras ob ON ob.id = oo.obra_id
+       WHERE o.telefono = $1`,
+      [phone]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: "Obrero no encontrado" });
+
+    // Si el obrero está en varias obras, devolvemos un array de obras
+    const obreroData = {
+      id: result.rows[0].id,
+      nombre: result.rows[0].nombre,
+      telefono: result.rows[0].telefono,
+      obras: result.rows.map(row => ({ obra_id: row.obra_id, obra_nombre: row.obra_nombre, rol: row.rol }))
+    };
+    res.json(obreroData);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: error.message });

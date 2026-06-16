@@ -7,7 +7,7 @@ import {
   registrarRetraso,
   actualizarStock,
 } from "../controllers/botController.js";
-import { registrarObrero } from "../controllers/obrerosController.js";
+import { registrarObrero, getUserByPhone } from "../controllers/obrerosController.js";
 
 const router = Router();
 
@@ -25,5 +25,7 @@ router.post("/stock", actualizarStock);
 
 // Obreros
 router.post("/obreros/registrar", registrarObrero);
+router.get("/obreros/telefono/:phone", getUserByPhone);
+
 
 export default router;

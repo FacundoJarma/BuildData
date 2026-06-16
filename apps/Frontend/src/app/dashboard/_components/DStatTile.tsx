@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { ChevronRight } from "@gravity-ui/icons";
 import { DCard } from "@/components/ui/DCard";
 
 const TONES: Record<string, { tint: string; fg: string }> = {
@@ -23,6 +24,7 @@ export function DStatTile({
   icon,
   delta,
   deltaTone = "slate",
+  onClick,
 }: {
   tone?: string;
   label: string;
@@ -31,33 +33,38 @@ export function DStatTile({
   icon: ReactNode;
   delta?: string;
   deltaTone?: string;
+  onClick?: () => void;
 }) {
   const t = TONES[tone] || TONES.primary;
+  const isClickable = !!onClick;
   return (
-    <DCard padding="p-4">
-      <div
-        className={`w-9 h-9 rounded-lg flex items-center justify-center mb-3 ${t.tint} ${t.fg}`}
-      >
-        {icon}
-      </div>
-      <div className="flex items-baseline gap-1">
-        <div className="text-[26px] font-extrabold display-tight tnum text-slate-950 leading-none">
-          {value}
+    <DCard padding="p-4" className={isClickable ? "cursor-pointer hover:shadow-card2 hover:border-slate-300 transition-all group" : ""}>
+      <div onClick={onClick} className="contents">
+        <div className="flex items-center justify-between mb-3">
+          <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${t.tint} ${t.fg}`}>
+            {icon}
+          </div>
+          {isClickable && <ChevronRight width={14} height={14} className="text-slate-300 group-hover:text-slate-500 transition-colors" />}
         </div>
-        {suffix && (
-          <div className="text-base font-bold text-slate-500">{suffix}</div>
+        <div className="flex items-baseline gap-1">
+          <div className="text-[26px] font-extrabold display-tight tnum text-slate-950 leading-none">
+            {value}
+          </div>
+          {suffix && (
+            <div className="text-base font-bold text-slate-500">{suffix}</div>
+          )}
+        </div>
+        <div className="text-[10px] font-bold tracking-[0.06em] uppercase text-slate-600 mt-1">
+          {label}
+        </div>
+        {delta && (
+          <div
+            className={`text-[11px] font-semibold mt-2 ${DELTA_COLORS[deltaTone] || DELTA_COLORS.slate}`}
+          >
+            {delta}
+          </div>
         )}
       </div>
-      <div className="text-[10px] font-bold tracking-[0.06em] uppercase text-slate-600 mt-1">
-        {label}
-      </div>
-      {delta && (
-        <div
-          className={`text-[11px] font-semibold mt-2 ${DELTA_COLORS[deltaTone] || DELTA_COLORS.slate}`}
-        >
-          {delta}
-        </div>
-      )}
     </DCard>
   );
 }

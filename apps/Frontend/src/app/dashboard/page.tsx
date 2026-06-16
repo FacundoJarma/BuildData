@@ -8,17 +8,27 @@ import {
 } from "@/app/dashboard/_components";
 import type { DashboardData } from "@/types/dashboard";
 import { getDashboard } from "@/services/dashboardService";
+import DashboardLoading from "./loading";
 
 function DashboardInner() {
   const searchParams = useSearchParams();
   const obraId = searchParams.get("id");
+  const [loading, setLoading] = useState(false);
 
   const [data, setData] = useState<DashboardData | null>(null);
 
   useEffect(() => {
-    if (obraId) getDashboard(obraId).then(setData);
+    if (obraId) {
+      setLoading(true);
+      getDashboard(obraId).then((data) => {
+        setData(data);
+        setLoading(false);
+      });
+    }
   }, [obraId]);
 
+  if(loading) return <DashboardLoading />;
+  
   if (!data) return <EmptyDashboardContent />;
 
   return <DashboardContent data={data} />;
@@ -26,7 +36,7 @@ function DashboardInner() {
 
 export default function DashboardPage() {
   return (
-    <Suspense fallback={<EmptyDashboardContent />}>
+    <Suspense fallback={<DashboardLoading />}>
       <DashboardInner />
     </Suspense>
   );

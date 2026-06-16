@@ -8,3 +8,8 @@ export { DashTopBar } from "./DashTopBar";
 export { ChatBubble } from "./ChatBubble";
 export { DashboardContent } from "./DashboardContent";
 export { EmptyDashboardContent } from "./EmptyDashboardContent";
+export { SideDrawer } from "./SideDrawer";
+export { BudgetCard } from "./BudgetCard";
+export { ActivityFeed } from "./ActivityFeed";
+export { CategoryModal } from "./CategoryModal";
+export type { CategoryFormData } from "./CategoryModal";

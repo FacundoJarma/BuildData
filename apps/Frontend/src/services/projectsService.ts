@@ -55,7 +55,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 export async function getObras(): Promise<Obra[]> {
   const { data: { session } } = await supabase.auth.getSession();
 
-  const res = await fetch(`${API_URL}/obras/obras`, {
+  const res = await fetch(`${API_URL}/obras`, {
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${session?.access_token || ""}`,
@@ -123,7 +123,7 @@ export async function createObra(input: CreateObraInput): Promise<any> {
     clientNotes: input.clientNotes,
   };
 
-  const res = await fetch(`${API_URL}/obras/obras`, {
+  const res = await fetch(`${API_URL}/obras`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
