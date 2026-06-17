@@ -94,6 +94,40 @@ export async function getDashboard(req, res) {
       [obraId]
     );
 
+        // Comparación semana actual vs semana anterior
+    const semanaActualResult = await pool.query(
+      `SELECT COUNT(*) AS total
+       FROM tareas
+       WHERE obra_id = $1
+       AND fecha_completada >= date_trunc('week', CURRENT_DATE)`,
+      [obraId]
+    );
+
+    const semanaAnteriorResult = await pool.query(
+      `SELECT COUNT(*) AS total
+       FROM tareas
+       WHERE obra_id = $1
+       AND fecha_completada >= date_trunc('week', CURRENT_DATE) - interval '1 week'
+       AND fecha_completada < date_trunc('week', CURRENT_DATE)`,
+      [obraId]
+    );
+
+    const semanaActual =
+      parseInt(semanaActualResult.rows[0].total) || 0;
+
+    const semanaAnterior =
+      parseInt(semanaAnteriorResult.rows[0].total) || 0;
+
+    let avanceDeltaPct = 0;
+
+    if (semanaAnterior > 0) {
+      avanceDeltaPct = Math.round(
+        ((semanaActual - semanaAnterior) / semanaAnterior) * 100
+      );
+    } else if (semanaActual > 0) {
+      avanceDeltaPct = 100;
+    }
+
     const avanceTotal = tareas.total > 0
       ? Math.round((tareas.completadas / tareas.total) * 100)
       : 0;
@@ -105,7 +139,7 @@ export async function getDashboard(req, res) {
       },
       stats: {
         avanceTotal,
-        avanceDeltaPct: 0,
+        avanceDeltaPct,        
         alertasCriticas: parseInt(alertasStats.criticas),
         alertasDeltaHoy: parseInt(alertasStats.hoy),
         pedidos: parseInt(pedidos.total),

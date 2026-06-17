@@ -10,6 +10,8 @@ import {
 
 const router = Router();
 
+router
+
 // GET /obras
 router.get("/obras", getObras);
 

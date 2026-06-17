@@ -1,20 +1,28 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+
 import { authMiddleware } from "./middleware/authMiddleware.js";
 
-// Auth
+// Rutas públicas
 import authRoutes from "./routes/auth.js";
 
-// Obras y sub-recursos anidados
-import { getObras, crearObra, getObra, updateObra, deleteObra, toggleStarred } from "./controllers/obrasController.js";
-import { getDashboard } from "./controllers/dashboardController.js";
-import { getTareas, crearTarea } from "./controllers/tareasController.js";
-import { getAlertas, crearAlerta, resolverAlerta } from "./controllers/alertasController.js";
-import { getRubros, crearRubro, updateRubro, deleteRubro } from "./controllers/rubrosController.js";
-
-// Bot (para Facu)
+// Rutas del bot
 import botRoutes from "./routes/bot.js";
+
+// Rutas protegidas
+import obrasRoutes from "./routes/obras.js";
+import dashboardRoutes from "./routes/dashboard.js";
+import tareasRoutes from "./routes/tareas.js";
+import alertasRoutes from "./routes/alertas.js";
+import rubrosRoutes from "./routes/rubros.js";
+import presupuestosRoutes from "./routes/presupuestos.js";
+import proveedoresRoutes from "./routes/proveedores.js";
+import usuariosRoutes from "./routes/usuarios.js";
+import materialesRoutes from "./routes/materiales.js";
+import gastosRoutes from "./routes/gastos.js";
+import reportesRoutes from "./routes/reportes.js";
+import obrerosRoutes from "./routes/obreros.js";
 
 dotenv.config();
 
@@ -23,41 +31,67 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ── Auth (pública) ────────────────────────────────────────────────────────────
+// ──────────────────────────────────────────
+// Públicas
+// ──────────────────────────────────────────
+
 app.use("/auth", authRoutes);
 
-// ── Bot (usa service_role internamente, sin auth de usuario) ──────────────────
+// ──────────────────────────────────────────
+// Bot (service_role key)
+// ──────────────────────────────────────────
+
 app.use("/bot", botRoutes);
 
-// ── Obras y todo lo anidado (requieren token) ─────────────────────────────────
+// ──────────────────────────────────────────
+// Todo lo demás requiere usuario autenticado
+// ──────────────────────────────────────────
+
 app.use(authMiddleware);
 
 // Obras
-app.get("/obras", getObras);
-app.post("/obras", crearObra);
-app.get("/obras/:obraId", getObra);
-app.patch("/obras/:obraId", updateObra);
-app.delete("/obras/:obraId", deleteObra);
-app.patch("/obras/:obraId/starred", toggleStarred);
+app.use("/", obrasRoutes);
 
 // Dashboard
-app.get("/obras/:obraId/dashboard", getDashboard);
-
-// Rubros
-app.get("/obras/:obraId/rubros", getRubros);
-app.post("/obras/:obraId/rubros", crearRubro);
-app.patch("/obras/:obraId/rubros/:rubroId", updateRubro);
-app.delete("/obras/:obraId/rubros/:rubroId", deleteRubro);
+app.use("/dashboard", dashboardRoutes);
 
 // Tareas
-app.get("/obras/:obraId/tareas", getTareas);
-app.post("/obras/:obraId/tareas", crearTarea);
+app.use("/tareas", tareasRoutes);
 
 // Alertas
-app.get("/obras/:obraId/alertas", getAlertas);
-app.post("/obras/:obraId/alertas", crearAlerta);
-app.patch("/obras/:obraId/alertas/:alertaId/resolver", resolverAlerta);
+app.use("/alertas", alertasRoutes);
 
-app.get("/", (req, res) => res.send("BuildData API funcionando"));
+// Rubros
+app.use("/obras", rubrosRoutes);
 
-app.listen(3001, () => console.log("Servidor en http://localhost:3001"));
+// Presupuestos
+app.use("/presupuestos", presupuestosRoutes);
+
+// Proveedores
+app.use("/proveedores", proveedoresRoutes);
+
+// Usuarios
+app.use("/usuarios", usuariosRoutes);
+
+// Materiales
+app.use("/materiales", materialesRoutes);
+
+// Gastos
+app.use("/gastos", gastosRoutes);
+
+// Reportes
+app.use("/reportes", reportesRoutes);
+
+// Obreros
+app.use("/obreros", obrerosRoutes);
+
+// Health check
+app.get("/", (req, res) => {
+  res.send("BuildData API funcionando");
+});
+
+const PORT = process.env.PORT || 3001;
+
+app.listen(PORT, () => {
+  console.log(`Servidor en http://localhost:${PORT}`);
+});

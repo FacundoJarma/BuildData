@@ -59,12 +59,17 @@ export async function actualizarTarea(req, res) {
   try {
     const result = await pool.query(
       `UPDATE tareas
-       SET estado = COALESCE($1, estado),
-           porcentaje_avance = COALESCE($2, porcentaje_avance),
-           asignado_a = COALESCE($3, asignado_a),
-           fecha_limite = COALESCE($4, fecha_limite)
-       WHERE id = $5
-       RETURNING *`,
+SET estado = COALESCE($1, estado),
+    porcentaje_avance = COALESCE($2, porcentaje_avance),
+    asignado_a = COALESCE($3, asignado_a),
+    fecha_limite = COALESCE($4, fecha_limite),
+    fecha_completada = CASE
+      WHEN $1 = 'completada'
+      THEN CURRENT_TIMESTAMP
+      ELSE fecha_completada
+    END
+    WHERE id = $5
+    RETURNING *`,
       [estado, porcentaje_avance, asignado_a, fecha_limite, id]
     );
     res.json(result.rows[0]);

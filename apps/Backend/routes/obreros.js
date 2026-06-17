@@ -1,13 +1,20 @@
-import { Router } from "express";
-import { getObreros, registrarObrero, quitarObreroDeObra, getObrasPorTelefono} from "../controllers/obrerosController.js";
+import express from "express";
 
+import {
+  getObreros,
+  asignarObraObrero,
+  quitarObreroDeObra,
+} from "../controllers/obrerosController.js";
 
-
-const router = Router();
+const router = express.Router();
 
 router.get("/:obra_id", getObreros);
-router.post("/registrar", registrarObrero);
-router.delete("/:obrero_id/obra/:obra_id", quitarObreroDeObra);
-router.get("/telefono/:telefono", getObrasPorTelefono);
+
+router.post("/asignar-obra", asignarObraObrero);
+
+router.delete(
+  "/:obrero_id/obra/:obra_id",
+  quitarObreroDeObra
+);
 
 export default router;
