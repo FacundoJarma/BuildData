@@ -20,6 +20,20 @@ export async function getDashboard(req, res) {
       [obraId]
     );
     const tareas = tareasResult.rows[0];
+    const tareasListResult = await pool.query(
+      `SELECT
+          id,
+          titulo,
+          estado,
+          prioridad,
+          porcentaje_avance,
+          fecha_inicio,
+          fecha_limite
+      FROM tareas
+      WHERE obra_id = $1
+      ORDER BY fecha_inicio ASC`,
+      [obraId]
+);
 
     // Stats de alertas
     const alertasResult = await pool.query(
@@ -40,6 +54,37 @@ export async function getDashboard(req, res) {
       [obraId]
     );
     const pedidos = pedidosResult.rows[0];
+    const pedidosResultRaw = await pool.query(
+      `SELECT
+          id,
+          estado,
+          aprobado,
+          fecha,
+          proveedor_id
+      FROM pedidos_materiales
+      WHERE obra_id = $1
+      ORDER BY fecha DESC`,
+      [obraId]
+    );
+
+const pedidosConItems = await Promise.all(
+  pedidosResultRaw.rows.map(async (pedido) => {
+    const itemsResult = await pool.query(
+      `SELECT
+          material_id,
+          cantidad,
+          precio_unitario
+       FROM pedidos_items
+       WHERE pedido_id = $1`,
+      [pedido.id]
+    );
+
+    return {
+      ...pedido,
+      items: itemsResult.rows,
+    };
+  })
+);
 
     // Presupuesto
     const presupuestoResult = await pool.query(
@@ -160,7 +205,8 @@ export async function getDashboard(req, res) {
       tradeProgress: tradeResult.rows.map(r => ({ ...r, pct: parseInt(r.pct) })),
       activityFeed: actividadResult.rows,
       alerts: alertasListResult.rows,
-    });
+      tasks: tareasListResult.rows,
+      orders: pedidosConItems,    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ code: "SERVER_ERROR", message: error.message });
