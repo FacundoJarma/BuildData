@@ -6,7 +6,10 @@ export interface DashboardData {
   tradeProgress: TradeProgress[];
   activityFeed: ActivityFeedItem[];
   alerts: AlertItem[];
+  tasks: TaskItem[];
+  orders: OrderItem[];
 }
+
 
 export interface ObraInfo {
   name: string;
@@ -61,4 +64,29 @@ export interface AlertItem {
   subtitle: string;
   time: string;
   tone: "critical" | "attention";
+}
+
+export interface TaskItem {
+  id: string;
+  title: string;
+  status: string;
+  priority: string;
+  progressPercent: number;
+  startDate: string;
+  dueDate: string;
+}
+
+export interface OrderItemDetail {
+  materialId: string;
+  quantity: number;
+  unitPrice: number;
+}
+
+export interface OrderItem {
+  id: string;
+  status: string;
+  approved: boolean;
+  date: string;
+  supplierId: string;
+  items: OrderItemDetail[];
 }

@@ -7,6 +7,33 @@ export interface ApiDashboardResponse {
   tradeProgress: ApiTradeProgress[];
   activityFeed: ApiActivityFeedItem[];
   alerts: ApiAlertItem[];
+  tasks: ApiTaskItem[];
+  orders: ApiOrderItem[];
+}
+
+export interface ApiTaskItem {
+  id: string;
+  titulo: string;
+  estado: string;
+  prioridad: string;
+  porcentaje_avance: number;
+  fecha_inicio: string;
+  fecha_limite: string;
+}
+
+export interface ApiOrderItemDetail {
+  material_id: string;
+  cantidad: number;
+  precio_unitario: number;
+}
+
+export interface ApiOrderItem {
+  id: string;
+  estado: string;
+  aprobado: boolean;
+  fecha: string;
+  proveedor_id: string;
+  items: ApiOrderItemDetail[];
 }
 
 export interface ApiObraInfo {

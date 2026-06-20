@@ -14,7 +14,6 @@ import { DPageHeader } from "./DPageHeader";
 import { DStatTile } from "./DStatTile";
 import { DPill } from "@/components/ui/DPill";
 import { DCard } from "@/components/ui/DCard";
-import { DAvatar } from "@/components/ui/DAvatar";
 import Button from "@/components/ui/Button";
 import ProgressByTradeCards from "./ProgressByTradeCards";
 import CriticalAlertsCard from "./CriticalAlertsCard";
@@ -60,6 +59,7 @@ export function DashboardContent({ data, onNavigate }: Props) {
     tradeProgress,
     activityFeed,
     alerts,
+    tasks,
   } = data;
 
   useEffect(() => {
@@ -325,13 +325,39 @@ export function DashboardContent({ data, onNavigate }: Props) {
           </div>
         </div>
         <div className="space-y-2">
-          {activityFeed.map((a, i) => (
-            <div key={i} className="flex items-center gap-3 border border-slate-200 rounded-lg p-3">
-              <DAvatar initials={a.initials} size={28} />
-              <div className="flex-1 min-w-0 text-[12px] leading-snug"><b>{a.name}</b> {a.action}</div>
-              <div className="text-[10px] text-slate-500 tnum">{a.time}</div>
-            </div>
-          ))}
+          {tasks.map((t) => {
+            const statusTone: Record<string, "success" | "info" | "slate"> = {
+              completada: "success",
+              en_progreso: "info",
+              pendiente: "slate",
+            };
+            const priorityTone: Record<string, "critical" | "attention" | "info" | "slate"> = {
+              critica: "critical",
+              alta: "attention",
+              media: "info",
+              baja: "slate",
+            };
+            return (
+              <div key={t.id} className="border border-slate-200 rounded-lg p-3">
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <span className="text-[13px] font-bold text-slate-950 truncate">{t.title}</span>
+                  <DPill tone={priorityTone[t.priority] || "slate"}>{t.priority}</DPill>
+                </div>
+                <div className="flex items-center gap-2 mb-2">
+                  <DPill tone={statusTone[t.status] || "slate"}>{t.status}</DPill>
+                  {t.dueDate && (
+                    <span className="text-[10px] text-slate-500">Vence: {t.dueDate}</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 bg-slate-100 h-[6px] rounded-full overflow-hidden">
+                    <div style={{ width: t.progressPercent + "%" }} className="h-full bg-primary rounded-full" />
+                  </div>
+                  <span className="text-[11px] font-bold tnum w-[34px] text-right">{t.progressPercent}%</span>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </SideDrawer>
 

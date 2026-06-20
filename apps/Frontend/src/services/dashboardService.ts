@@ -1,6 +1,6 @@
 import { supabase } from "@/lib/supabaseClient";
 import type { ApiDashboardResponse } from "@/types/dashboard.api";
-import type { DashboardData } from "@/types/dashboard";
+import type { DashboardData, TaskItem, OrderItem } from "@/types/dashboard";
 
 const TRADE_COLORS: Record<string, string> = {
   "Mampostería":                "#22C55E",
@@ -106,6 +106,29 @@ function transformDashboard(api: ApiDashboardResponse): DashboardData {
       time:     formatRelativeTime(item.timestamp),
       tone:     item.severity,
     })),
+
+    tasks: api.tasks.map((task): TaskItem => ({
+      id:             task.id,
+      title:          task.titulo,
+      status:         task.estado,
+      priority:       task.prioridad,
+      progressPercent: task.porcentaje_avance,
+      startDate:      task.fecha_inicio ? formatDate(task.fecha_inicio) : "",
+      dueDate:        task.fecha_limite ? formatDate(task.fecha_limite) : "",
+    })),
+
+    orders: api.orders.map((order): OrderItem => ({
+      id:         order.id,
+      status:     order.estado,
+      approved:   order.aprobado,
+      date:       formatDate(order.fecha),
+      supplierId: order.proveedor_id,
+      items:      order.items.map((item) => ({
+        materialId: item.material_id,
+        quantity:   item.cantidad,
+        unitPrice:  item.precio_unitario,
+      })),
+    })),
   };
 }
 
@@ -116,7 +139,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 export async function getDashboard(obraId: string): Promise<DashboardData> {
   const { data: { session } } = await supabase.auth.getSession();
 
-  const res = await fetch(`${API_URL}/obras/${obraId}/dashboard`, {
+  const res = await fetch(`${API_URL}/dashboard/${obraId}`, {
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${session?.access_token || ""}`,
