@@ -11,6 +11,7 @@ export const MSG = {
   ERROR_CANCELLED_BAD_CMD:   "❌ No entendí el comando, así que cancelé lo que teníamos. Escribí *!ayuda* para ver los disponibles.",
   ERROR_NO_OBRA:            "⚠️ No tenés ninguna obra asociada a este número. Usá *!iniciar* para registrarte.",
   ERROR_PROCESSING:          "❌ Algo salió mal, probá de nuevo.",
+  ERROR_MISSING_FIELDS:      "❌ Me falta información para completar eso. ¿Podés darme más detalles?",
 
   SUCCESS_DATA_SAVED:        "✅ Listo, ya quedó guardado.",
   SUCCESS_DATA_CANCELLED:    "❌ Dale, lo cancelé.",

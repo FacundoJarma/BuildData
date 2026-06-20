@@ -1,7 +1,7 @@
-// src/handlers/freetext.handler.ts
 import { Message } from "whatsapp-web.js";
 import { textToOperation } from "../services/llm.service";
-import { clearPending, hasPending, RawOperation } from "./pendingQuery.store";
+import { clearPending, hasPending, ApiCall } from "./pendingQuery.store";
+import { validateApiCall } from "../services/endpointSchema";
 import { sendObraPoll } from "../services/pollConfirmation.service";
 import { MSG, MSG_LLM_ERROR } from "../shared/responses";
 
@@ -14,9 +14,9 @@ export async function handleFreeText(phone: string, message: Message): Promise<v
 
     const raw = await textToOperation(message.body.trim());
 
-    let parsed: RawOperation;
+    let parsed: ApiCall;
     try {
-      parsed = JSON.parse(raw) as RawOperation;
+      parsed = JSON.parse(raw) as ApiCall;
     } catch {
       await message.reply(MSG.ERROR_PARSE_FAILED);
       return;
@@ -27,13 +27,20 @@ export async function handleFreeText(phone: string, message: Message): Promise<v
       return;
     }
 
-    if (!parsed.action || !parsed.table || !parsed.data) {
+    if (!parsed.endpoint || !parsed.data) {
       await message.reply(MSG.ERROR_OPERATION_INCOMPLETE);
       return;
     }
 
+    const validation = validateApiCall(parsed.endpoint, parsed.data);
+    if (!validation.valid) {
+      const missingList = validation.missingRequired.join(", ");
+      await message.reply(`❌ Me falta información: ${missingList}. ¿Podés darme más detalles?`);
+      return;
+    }
+
     const chat = await message.getChat();
-    await message.reply("Ok! " + parsed.comment || "Estoy procesando tu solicitud...");
+    await message.reply("Ok! " + (parsed.comment || "Estoy procesando tu solicitud..."));
     await sendObraPoll(phone, chat, { type: "operation", operation: parsed });
 
   } catch (error) {

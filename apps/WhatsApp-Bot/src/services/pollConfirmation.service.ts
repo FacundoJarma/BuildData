@@ -6,25 +6,34 @@ import {
   getPending,
   PendingQuery,
 } from "../handlers/pendingQuery.store";
+import { callEndpoint } from "./api.service";
 import { MSG } from "../shared/responses";
 
-function executePending(pending: PendingQuery, obraNombre: string): void {
+async function executePending(pending: PendingQuery, obraNombre: string): Promise<void> {
   const tag = `obra "${obraNombre}"`;
   switch (pending.type) {
-    case "operation":
-      console.log(
-        `Operación confirmada para ${tag}: ${JSON.stringify(pending.operation)}`,
-      );
+    case "operation": {
+      const { endpoint, method, data } = pending.operation;
+      const payload = {
+        ...data,
+        obra_id: pending.obra_id,
+      };
+      console.log(`[executePending] → ${method} ${endpoint} para ${tag}`);
+      console.log(`[executePending] payload: ${JSON.stringify(payload)}`);
+      try {
+        const result = await callEndpoint(method, endpoint, payload);
+        console.log(`[executePending] respuesta: ${JSON.stringify(result)}`);
+      } catch (error) {
+        console.error(`[executePending] error llamando ${endpoint}:`, error);
+        throw error;
+      }
       break;
+    }
     case "comprobante":
-      console.log(
-        `Comprobante confirmado para ${tag}: ${JSON.stringify(pending.data)}`,
-      );
+      console.log(`Comprobante confirmado para ${tag}: ${JSON.stringify(pending.data)}`);
       break;
     case "factura":
-      console.log(
-        `Factura confirmada para ${tag}: ${JSON.stringify(pending.data)}`,
-      );
+      console.log(`Factura confirmada para ${tag}: ${JSON.stringify(pending.data)}`);
       break;
   }
 }
@@ -101,9 +110,14 @@ export async function handlePollVote(
 
   pending.obra_id = obra.obra_id;
   clearPending(voterPhone);
-  executePending(pending, obra.obra_nombre);
-
-  await pollMessage.delete(true);
-  const chat = await pollMessage.getChat();
-  await chat.sendMessage(MSG.SUCCESS_DATA_SAVED);
+  try {
+    await executePending(pending, obra.obra_nombre);
+    await pollMessage.delete(true);
+    const chat = await pollMessage.getChat();
+    await chat.sendMessage(MSG.SUCCESS_DATA_SAVED);
+  } catch (error) {
+    await pollMessage.delete(true);
+    const chat = await pollMessage.getChat();
+    await chat.sendMessage("❌ Ocurrió un error al ejecutar la operación. Intentá de nuevo.");
+  }
 }

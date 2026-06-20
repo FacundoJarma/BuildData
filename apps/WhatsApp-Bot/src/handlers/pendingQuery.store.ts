@@ -1,17 +1,15 @@
-// src/handlers/pendingQuery.store.ts
 import { ComprobanteData, FacturaData } from "../services/vision.service";
 
-export interface RawOperation {
-  action: "insert" | "update";
-  table: string;
+export interface ApiCall {
+  endpoint: string;
+  method: "POST" | "GET";
   data: Record<string, unknown>;
-  where?: Record<string, unknown>;
   comment?: string;
   error?: string;
 }
 
 export type PendingQuery =
-  | { type: "operation"; operation: RawOperation; obra_id?: number }
+  | { type: "operation"; operation: ApiCall; obra_id?: number }
   | { type: "comprobante"; data: ComprobanteData; obra_id?: number }
   | { type: "factura"; data: FacturaData; obra_id?: number };
 

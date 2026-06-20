@@ -38,6 +38,14 @@ async function apiRequest<T>(
   }
 }
 
+export async function callEndpoint(
+  method: "POST" | "GET",
+  path: string,
+  body?: Record<string, unknown>,
+): Promise<unknown> {
+  return apiRequest<unknown>(method, path, body);
+}
+
 export async function registerUser(
   phone: string,
   name: string,
@@ -57,6 +65,6 @@ export async function getUserByPhone(phone: string): Promise<User | null> {
     return data;
   } catch (error) {
     if (error instanceof Error && error.message.startsWith("API_ERROR")) return null;
-    throw error; // re-lanzar errores de auth para que no queden silenciosos
+    throw error;
   }
 }
