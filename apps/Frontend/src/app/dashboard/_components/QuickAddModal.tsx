@@ -13,6 +13,7 @@ import {
   Lock,
 } from "@gravity-ui/icons";
 import { useDashboardData } from "./DashboardDataContext";
+import { createTask, createAlert, createReport } from "@/services/quickAddService";
 
 interface FieldDef {
   id: string;
@@ -85,16 +86,18 @@ const QUICK_FORMS: Record<string, FormConfig> = {
 
 interface Props {
   kind: string | null;
+  obraId: string;
   onClose: () => void;
   onDone: (msg: string) => void;
 }
 
-export function QuickAddModal({ kind, onClose, onDone }: Props) {
+export function QuickAddModal({ kind, obraId, onClose, onDone }: Props) {
   const cfg = kind ? QUICK_FORMS[kind] : null;
   const [data, setData] = useState<Record<string, string>>({});
   const [extraOpts, setExtraOpts] = useState<Record<string, string[]>>({});
   const [adding, setAdding] = useState<string | null>(null);
   const [addVal, setAddVal] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const { data: lookup } = useDashboardData();
 
   useEffect(() => {
@@ -119,10 +122,20 @@ export function QuickAddModal({ kind, onClose, onDone }: Props) {
 
   const set = (id: string, v: string) => setData((p) => ({ ...p, [id]: v }));
 
-  const submit = () => {
-    if (!canSave) return;
-    onDone(cfg.done(data));
-    onClose();
+  const submit = async () => {
+    if (!canSave || submitting) return;
+    setSubmitting(true);
+    try {
+      if (kind === "tarea") await createTask(obraId, data);
+      else if (kind === "critico") await createAlert(obraId, data);
+      else if (kind === "reporte") await createReport(obraId, data);
+      onDone(cfg.done(data));
+      onClose();
+    } catch (e: unknown) {
+      onDone(e instanceof Error ? e.message : "Error al guardar");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const Icon = cfg.icon;
@@ -202,9 +215,9 @@ export function QuickAddModal({ kind, onClose, onDone }: Props) {
 
         <div className="px-6 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-end gap-2 flex-none">
           <button onClick={onClose} className="text-[12px] font-bold text-slate-600 hover:text-slate-950 px-3 py-[8px]">Cancelar</button>
-          <button onClick={submit} disabled={!canSave}
-            className={"inline-flex items-center gap-2 text-[13px] font-bold rounded-md px-4 py-[9px] transition-colors " + (canSave ? "bg-primary hover:bg-primary-700 text-white" : "bg-slate-200 text-slate-500 cursor-not-allowed")}>
-            Crear <Check width={14} height={14} />
+          <button onClick={submit} disabled={!canSave || submitting}
+            className={"inline-flex items-center gap-2 text-[13px] font-bold rounded-md px-4 py-[9px] transition-colors " + (canSave && !submitting ? "bg-primary hover:bg-primary-700 text-white" : "bg-slate-200 text-slate-500 cursor-not-allowed")}>
+            {submitting ? "Guardando…" : "Crear"} {!submitting && <Check width={14} height={14} />}
           </button>
         </div>
       </div>

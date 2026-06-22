@@ -34,15 +34,15 @@ export async function resolverAlerta(req, res) {
   }
 }
 
-// POST /alertas — crear alerta (usado internamente por el sistema)
+// POST /alertas — crear alerta
 export async function crearAlerta(req, res) {
-  const { obra_id, tipo, mensaje, prioridad, usuario_id } = req.body;
+  const { obra_id, tipo, mensaje, prioridad, usuario_id, titulo, subtitulo, severity } = req.body;
   try {
     const result = await pool.query(
-      `INSERT INTO alertas (obra_id, tipo, mensaje, prioridad, usuario_id)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO alertas (obra_id, tipo, mensaje, prioridad, usuario_id, titulo, subtitulo, severity)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
-      [obra_id, tipo, mensaje, prioridad, usuario_id]
+      [obra_id, tipo, mensaje, prioridad, usuario_id, titulo, subtitulo, severity || 'attention']
     );
     res.status(201).json(result.rows[0]);
   } catch (error) {

@@ -150,7 +150,7 @@ export async function getDashboard(obraId: string): Promise<DashboardData> {
   if (!res.ok) throw new Error(`Dashboard fetch failed: ${res.status}`);
   const data: ApiDashboardResponse = await res.json();
 
-  console.log("Dashboard data fetched:", data);
+  console.log(data);
 
   return transformDashboard(data);
 }
