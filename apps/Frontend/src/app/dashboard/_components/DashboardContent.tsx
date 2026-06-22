@@ -22,6 +22,7 @@ import { ActivityFeed } from "./ActivityFeed";
 import { SideDrawer } from "./SideDrawer";
 import { useToast, DashToast } from "./useToast";
 import { CategoryModal, type CategoryFormData } from "./CategoryModal";
+import { useDashboardData } from "../../../contexts/DashboardDataContext";
 import type { DashboardData } from "@/types/dashboard";
 
 function formatCurrency(n: number): string {
@@ -30,13 +31,21 @@ function formatCurrency(n: number): string {
   return `AR$ ${n}`;
 }
 
-function catProgress(cat: CategoryFormData, tradeProgress: DashboardData["tradeProgress"]): number {
-  if (!cat.tradeNames.length) return 0;
-  const sum = cat.tradeNames.reduce((a, name) => {
-    const t = tradeProgress.find((tp) => tp.name === name);
-    return a + (t ? t.pct : 0);
+const STATE_MAP: Record<string, { dot: string; label: string }> = {
+  completada:   { dot: "#22C55E", label: "Completada" },
+  en_progreso:  { dot: "#0F4395", label: "En curso" },
+  pendiente:    { dot: "#94A3B8", label: "Pendiente" },
+  en_retraso:   { dot: "#EF4444", label: "Retraso" },
+  programada:   { dot: "#3B82F6", label: "Programada" },
+};
+
+function catProgress(cat: CategoryFormData, tasks: DashboardData["tasks"]): number {
+  if (!cat.taskIds.length) return 0;
+  const sum = cat.taskIds.reduce((a, id) => {
+    const t = tasks.find((tk) => tk.id === id);
+    return a + (t ? t.progressPercent : 0);
   }, 0);
-  return Math.round(sum / cat.tradeNames.length);
+  return Math.round(sum / cat.taskIds.length);
 }
 
 interface Props {
@@ -62,18 +71,28 @@ export function DashboardContent({ data, onNavigate }: Props) {
     tasks,
   } = data;
 
+  const { setLookupData } = useDashboardData();
+
   useEffect(() => {
-    if (categories.length === 0 && tradeProgress.length > 0) {
-      setCategories(
-        tradeProgress.map((tp) => ({
-          id: "cat-" + tp.name.toLowerCase().replace(/\s+/g, "-"),
-          name: tp.name,
-          color: tp.color,
-          tradeNames: [tp.name],
-        })),
-      );
+    setLookupData({
+      rubros: tradeProgress.map((t) => t.name),
+      tasks,
+      workers: [],
+    });
+  }, [tradeProgress, tasks, setLookupData]);
+
+  useEffect(() => {
+    if (categories.length === 0 && tasks.length > 0) {
+      setCategories([
+        {
+          id: "cat-todas",
+          name: "Todas las tareas",
+          color: "#0F4395",
+          taskIds: tasks.map((t) => t.id),
+        },
+      ]);
     }
-  }, [tradeProgress, categories.length]);
+  }, [tasks, categories.length]);
 
   const pedidosMock = {
     porAprobar: stats.pedidosPendientes,
@@ -83,7 +102,7 @@ export function DashboardContent({ data, onNavigate }: Props) {
   };
 
   const totalAvance = categories.length
-    ? Math.round(categories.reduce((a, c) => a + catProgress(c, tradeProgress), 0) / categories.length)
+    ? Math.round(categories.reduce((a, c) => a + catProgress(c, tasks), 0) / categories.length)
     : stats.avanceTotal;
 
   const handleNav = (section: string) => {
@@ -185,7 +204,10 @@ export function DashboardContent({ data, onNavigate }: Props) {
         <ProgressByTradeCards
           data={tradeProgress}
           onItemClick={(name) => {
-            const cat = categories.find((c) => c.tradeNames.includes(name));
+            const cat = categories.find((c) => c.taskIds.some((id) => {
+              const t = tasks.find((tk) => tk.id === id);
+              return t && t.title === name;
+            }));
             if (cat) setDrawer({ kind: "rubro", catId: cat.id });
           }}
           onNewCategory={() => setCatModal({ initial: null })}
@@ -230,7 +252,7 @@ export function DashboardContent({ data, onNavigate }: Props) {
         </div>
         <div className="space-y-3">
           {categories.map((c) => {
-            const pct = catProgress(c, tradeProgress);
+            const pct = catProgress(c, tasks);
             return (
               <div key={c.id}>
                 <div className="flex items-center justify-between text-[12px] mb-1">
@@ -242,7 +264,7 @@ export function DashboardContent({ data, onNavigate }: Props) {
                 <div className="bg-slate-100 h-[7px] rounded-full overflow-hidden">
                   <div style={{ width: pct + "%", background: c.color }} className="h-full rounded-full" />
                 </div>
-                <div className="text-[10px] text-slate-500 mt-1">{c.tradeNames.length} rubro{c.tradeNames.length === 1 ? "" : "s"} incluido{c.tradeNames.length === 1 ? "" : "s"}</div>
+                <div className="text-[10px] text-slate-500 mt-1">{c.taskIds.length} tarea{c.taskIds.length === 1 ? "" : "s"} adjunta{c.taskIds.length === 1 ? "" : "s"}</div>
               </div>
             );
           })}
@@ -437,27 +459,33 @@ export function DashboardContent({ data, onNavigate }: Props) {
         {drawerCat && (
           <>
             <div className="flex items-baseline gap-2 mb-4">
-              <div className="text-[40px] font-extrabold display-tight tnum text-slate-950 leading-none">{catProgress(drawerCat, tradeProgress)}%</div>
-              <div className="text-[12px] text-slate-500">promedio de {drawerCat.tradeNames.length} rubro{drawerCat.tradeNames.length === 1 ? "" : "s"}</div>
+              <div className="text-[40px] font-extrabold display-tight tnum text-slate-950 leading-none">{catProgress(drawerCat, tasks)}%</div>
+              <div className="text-[12px] text-slate-500">promedio de {drawerCat.taskIds.length} tarea{drawerCat.taskIds.length === 1 ? "" : "s"}</div>
             </div>
             <div className="bg-slate-100 h-[8px] rounded-full overflow-hidden mb-5">
-              <div style={{ width: catProgress(drawerCat, tradeProgress) + "%", background: drawerCat.color }} className="h-full rounded-full" />
+              <div style={{ width: catProgress(drawerCat, tasks) + "%", background: drawerCat.color }} className="h-full rounded-full" />
             </div>
-            <div className="text-[10px] tracking-[0.06em] uppercase font-bold text-slate-500 mb-2">Rubros incluidos</div>
+            <div className="text-[10px] tracking-[0.06em] uppercase font-bold text-slate-500 mb-2">Tareas adjuntas</div>
+            {drawerCat.taskIds.length === 0 && (
+              <div className="text-center text-slate-500 text-[12px] py-6 border border-dashed border-slate-200 rounded-lg">
+                Sin tareas. Editá la categoría para adjuntar.
+              </div>
+            )}
             <div className="space-y-2">
-              {drawerCat.tradeNames.map((name) => {
-                const t = tradeProgress.find((tp) => tp.name === name);
+              {drawerCat.taskIds.map((id) => {
+                const t = tasks.find((tk) => tk.id === id);
                 if (!t) return null;
+                const st = STATE_MAP[t.status] || STATE_MAP.pendiente;
                 return (
-                  <div key={name} className="border border-slate-200 rounded-lg p-3">
+                  <div key={id} className="border border-slate-200 rounded-lg p-3">
                     <div className="flex items-center justify-between gap-2 mb-2">
-                      <span className="text-[12px] font-bold text-slate-950 truncate">{t.name}</span>
+                      <span className="text-[12px] font-bold text-slate-950 truncate">{t.title}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="flex-1 bg-slate-100 h-[6px] rounded-full overflow-hidden">
-                        <div style={{ width: t.pct + "%", background: t.color }} className="h-full rounded-full" />
+                        <div style={{ width: t.progressPercent + "%", background: st.dot }} className="h-full rounded-full" />
                       </div>
-                      <span className="text-[11px] font-bold tnum w-[34px] text-right">{t.pct}%</span>
+                      <span className="text-[11px] font-bold tnum w-[34px] text-right">{t.progressPercent}%</span>
                     </div>
                   </div>
                 );
@@ -470,7 +498,7 @@ export function DashboardContent({ data, onNavigate }: Props) {
       <CategoryModal
         open={!!catModal}
         initial={catModal ? catModal.initial : null}
-        availableTrades={tradeProgress}
+        availableTasks={tasks}
         onClose={() => setCatModal(null)}
         onSave={saveCategory}
       />

@@ -2,34 +2,43 @@
 
 import { useState, useEffect } from "react";
 import { ChartBar, Check, Xmark } from "@gravity-ui/icons";
+import type { TaskItem } from "@/types/dashboard";
 
 const CAT_COLORS = ["#0F4395", "#22C55E", "#3B82F6", "#F59E0B", "#94A3B8", "#8B5CF6", "#EF4444", "#14B8A6"];
+
+const STATE_MAP: Record<string, { dot: string; label: string }> = {
+  completada:   { dot: "#22C55E", label: "Completada" },
+  en_progreso:  { dot: "#0F4395", label: "En curso" },
+  pendiente:    { dot: "#94A3B8", label: "Pendiente" },
+  en_retraso:   { dot: "#EF4444", label: "Retraso" },
+  programada:   { dot: "#3B82F6", label: "Programada" },
+};
 
 export interface CategoryFormData {
   id: string;
   name: string;
   color: string;
-  tradeNames: string[];
+  taskIds: string[];
 }
 
 interface Props {
   open: boolean;
   initial: CategoryFormData | null;
-  availableTrades: { name: string; pct: number; color: string }[];
+  availableTasks: TaskItem[];
   onClose: () => void;
   onSave: (cat: CategoryFormData) => void;
 }
 
-export function CategoryModal({ open, initial, availableTrades, onClose, onSave }: Props) {
+export function CategoryModal({ open, initial, availableTasks, onClose, onSave }: Props) {
   const [name, setName] = useState("");
   const [color, setColor] = useState(CAT_COLORS[0]);
-  const [tradeNames, setTradeNames] = useState<string[]>([]);
+  const [taskIds, setTaskIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (open) {
       setName(initial ? initial.name : "");
       setColor(initial ? initial.color : CAT_COLORS[0]);
-      setTradeNames(initial ? [...initial.tradeNames] : []);
+      setTaskIds(initial ? [...initial.taskIds] : []);
     }
   }, [open, initial]);
 
@@ -42,17 +51,17 @@ export function CategoryModal({ open, initial, availableTrades, onClose, onSave 
 
   if (!open) return null;
 
-  const toggleTrade = (t: string) =>
-    setTradeNames((p) => p.includes(t) ? p.filter((x) => x !== t) : [...p, t]);
+  const toggleTask = (id: string) =>
+    setTaskIds((p) => p.includes(id) ? p.filter((x) => x !== id) : [...p, id]);
 
-  const preview = tradeNames.length
-    ? Math.round(tradeNames.reduce((a, t) => {
-        const found = availableTrades.find((at) => at.name === t);
-        return a + (found ? found.pct : 0);
-      }, 0) / tradeNames.length)
+  const preview = taskIds.length
+    ? Math.round(taskIds.reduce((a, id) => {
+        const found = availableTasks.find((t) => t.id === id);
+        return a + (found ? found.progressPercent : 0);
+      }, 0) / taskIds.length)
     : 0;
 
-  const canSave = name.trim().length >= 2 && tradeNames.length > 0;
+  const canSave = name.trim().length >= 2 && taskIds.length > 0;
 
   const submit = () => {
     if (!canSave) return;
@@ -60,7 +69,7 @@ export function CategoryModal({ open, initial, availableTrades, onClose, onSave 
       id: initial ? initial.id : "cat-" + Date.now().toString(36),
       name: name.trim(),
       color,
-      tradeNames,
+      taskIds,
     });
     onClose();
   };
@@ -75,7 +84,7 @@ export function CategoryModal({ open, initial, availableTrades, onClose, onSave 
             </div>
             <div>
               <div className="text-[15px] font-extrabold display-tight">{initial ? "Editar categoría" : "Nueva categoría"}</div>
-              <div className="text-[11px] text-slate-500">El progreso se calcula con los rubros que adjuntes</div>
+              <div className="text-[11px] text-slate-500">El progreso se calcula con las tareas que adjuntes</div>
             </div>
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-md hover:bg-slate-100 text-slate-500 hover:text-slate-950 flex items-center justify-center">
@@ -103,29 +112,30 @@ export function CategoryModal({ open, initial, availableTrades, onClose, onSave 
 
           <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-bold text-slate-700">Rubros incluidos</span>
-              <span className="text-[11px] text-slate-500">{tradeNames.length} seleccionado{tradeNames.length === 1 ? "" : "s"}</span>
+              <span className="text-[11px] font-bold text-slate-700">Tareas del cronograma</span>
+              <span className="text-[11px] text-slate-500">{taskIds.length} seleccionada{taskIds.length === 1 ? "" : "s"}</span>
             </div>
             <div className="border border-slate-200 rounded-lg max-h-[240px] overflow-y-auto">
-              {availableTrades.length === 0 && (
+              {availableTasks.length === 0 && (
                 <div className="text-center text-slate-500 text-[12px] py-8">
-                  No hay rubros disponibles.
+                  No hay tareas disponibles.
                 </div>
               )}
-              {availableTrades.map((t) => {
-                const on = tradeNames.includes(t.name);
+              {availableTasks.map((t) => {
+                const on = taskIds.includes(t.id);
+                const st = STATE_MAP[t.status] || STATE_MAP.pendiente;
                 return (
-                  <button key={t.name} type="button" onClick={() => toggleTrade(t.name)}
+                  <button key={t.id} type="button" onClick={() => toggleTask(t.id)}
                     className="w-full flex items-center gap-3 px-3 py-[9px] hover:bg-slate-50 text-left border-b border-slate-100 last:border-b-0">
                     <span className={"w-[18px] h-[18px] rounded-[5px] border-2 flex items-center justify-center flex-none " + (on ? "bg-primary border-primary text-white" : "border-slate-300 bg-white")}>
                       {on && <Check width={11} height={11} />}
                     </span>
                     <span className="flex-1 min-w-0">
-                      <span className="text-[12px] font-semibold text-slate-900 block truncate">{t.name}</span>
+                      <span className="text-[12px] font-semibold text-slate-900 block truncate">{t.title}</span>
                     </span>
                     <span className="flex items-center gap-1 flex-none">
-                      <span className="w-[6px] h-[6px] rounded-full" style={{ background: t.color }} />
-                      <span className="text-[11px] font-bold tnum text-slate-600 w-[34px] text-right">{t.pct}%</span>
+                      <span className="w-[6px] h-[6px] rounded-full" style={{ background: st.dot }} />
+                      <span className="text-[11px] font-bold tnum text-slate-600 w-[34px] text-right">{t.progressPercent}%</span>
                     </span>
                   </button>
                 );

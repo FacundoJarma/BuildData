@@ -13,3 +13,7 @@ export { BudgetCard } from "./BudgetCard";
 export { ActivityFeed } from "./ActivityFeed";
 export { CategoryModal } from "./CategoryModal";
 export type { CategoryFormData } from "./CategoryModal";
+export { QuickAddMenu } from "./QuickAddMenu";
+export { QuickAddModal } from "./QuickAddModal";
+export { QuickAddProvider, useQuickAdd } from "./QuickAddContext";
+export { DashboardDataProvider, useDashboardData } from "../../../contexts/DashboardDataContext";
