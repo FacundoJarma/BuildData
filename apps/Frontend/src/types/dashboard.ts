@@ -46,6 +46,7 @@ export interface BudgetItem {
 }
 
 export interface TradeProgress {
+  id: string;
   name: string;
   pct: number;
   color: string;

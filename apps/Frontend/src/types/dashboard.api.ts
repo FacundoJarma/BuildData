@@ -70,6 +70,7 @@ export interface ApiBudgetItem {
 }
 
 export interface ApiTradeProgress {
+  id: string;                // BudgetCategory.id
   name: string;
   pct: number;               // 0-100
   // "color" lo asigna el FRONT según el rubro, no lo manda el back

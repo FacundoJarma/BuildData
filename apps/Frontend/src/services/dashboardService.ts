@@ -87,6 +87,7 @@ function transformDashboard(api: ApiDashboardResponse): DashboardData {
     }),
 
     tradeProgress: api.tradeProgress.map((item) => ({
+      id:    item.id,
       name:  item.name,
       pct:   item.pct,
       color: TRADE_COLORS[item.name] ?? TRADE_COLOR_FALLBACK,
@@ -147,7 +148,9 @@ export async function getDashboard(obraId: string): Promise<DashboardData> {
   });
 
   if (!res.ok) throw new Error(`Dashboard fetch failed: ${res.status}`);
-
   const data: ApiDashboardResponse = await res.json();
+
+  console.log("Dashboard data fetched:", data);
+
   return transformDashboard(data);
 }

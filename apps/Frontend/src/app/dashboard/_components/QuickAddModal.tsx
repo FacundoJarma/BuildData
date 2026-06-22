@@ -12,7 +12,7 @@ import {
   Plus,
   Lock,
 } from "@gravity-ui/icons";
-import { useDashboardData } from "../../../contexts/DashboardDataContext";
+import { useDashboardData } from "./DashboardDataContext";
 
 interface FieldDef {
   id: string;
@@ -144,7 +144,7 @@ export function QuickAddModal({ kind, onClose, onDone }: Props) {
 
         <div className="p-6 space-y-4 overflow-y-auto">
           {cfg.fields.map((f) => {
-            const sourceOpts = f.source === "rubros" ? lookup.rubros : [];
+            const sourceOpts = f.source === "rubros" ? lookup.rubros.map((r) => r.name) : [];
             const opts = [...(f.options || []), ...sourceOpts, ...(extraOpts[f.id] || [])];
             const commitAdd = () => {
               const v = addVal.trim();

@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { DashSidebar } from "@/app/dashboard/_components/DashSidebar";
 import { DashTopBar } from "@/app/dashboard/_components/DashTopBar";
-import { DashboardDataProvider } from "@/contexts/DashboardDataContext";
+import { DashboardDataProvider } from "@/app/dashboard/_components/DashboardDataContext";
 import { QuickAddProvider } from "@/app/dashboard/_components/QuickAddContext";
 import { QuickAddModal } from "@/app/dashboard/_components/QuickAddModal";
 import { useToast, DashToast } from "@/app/dashboard/_components/useToast";

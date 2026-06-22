@@ -107,7 +107,7 @@ const pedidosConItems = await Promise.all(
 
     // Trade progress
     const tradeResult = await pool.query(
-      `SELECT r.nombre AS name,
+      `SELECT r.id, r.nombre AS name,
         CASE WHEN pr.cap > 0 THEN ROUND((pr.spent::numeric / pr.cap) * 100) ELSE 0 END AS pct
        FROM rubros r
        JOIN presupuesto_rubros pr ON pr.rubro_id = r.id

@@ -3,8 +3,14 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
 import type { TaskItem } from "@/types/dashboard";
 
+export interface RubroInfo {
+  id: string;
+  name: string;
+}
+
 export interface LookupData {
-  rubros: string[];
+  rubros: RubroInfo[];
+  rubroMap: Record<string, string>;
   tasks: TaskItem[];
   workers: string[];
 }
@@ -15,12 +21,12 @@ interface ContextValue {
 }
 
 const DashboardDataContext = createContext<ContextValue>({
-  data: { rubros: [], tasks: [], workers: [] },
+  data: { rubros: [], rubroMap: {}, tasks: [], workers: [] },
   setLookupData: () => {},
 });
 
 export function DashboardDataProvider({ children }: { children: ReactNode }) {
-  const [data, setData] = useState<LookupData>({ rubros: [], tasks: [], workers: [] });
+  const [data, setData] = useState<LookupData>({ rubros: [], rubroMap: {}, tasks: [], workers: [] });
   const setLookupData = useCallback((d: LookupData) => setData(d), []);
   return (
     <DashboardDataContext.Provider value={{ data, setLookupData }}>

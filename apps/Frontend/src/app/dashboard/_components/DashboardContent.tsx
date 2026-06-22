@@ -22,7 +22,7 @@ import { ActivityFeed } from "./ActivityFeed";
 import { SideDrawer } from "./SideDrawer";
 import { useToast, DashToast } from "./useToast";
 import { CategoryModal, type CategoryFormData } from "./CategoryModal";
-import { useDashboardData } from "../../../contexts/DashboardDataContext";
+import { useDashboardData } from "./DashboardDataContext";
 import type { DashboardData } from "@/types/dashboard";
 
 function formatCurrency(n: number): string {
@@ -74,8 +74,10 @@ export function DashboardContent({ data, onNavigate }: Props) {
   const { setLookupData } = useDashboardData();
 
   useEffect(() => {
+    const rubros = tradeProgress.map((t) => ({ id: t.id, name: t.name }));
     setLookupData({
-      rubros: tradeProgress.map((t) => t.name),
+      rubros,
+      rubroMap: Object.fromEntries(rubros.map((r) => [r.name, r.id])),
       tasks,
       workers: [],
     });
