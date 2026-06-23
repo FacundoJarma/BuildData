@@ -12,6 +12,7 @@ import {
   Plus,
   Lock,
 } from "@gravity-ui/icons";
+import { QRCodeSVG } from "qrcode.react";
 import { useDashboardData } from "./DashboardDataContext";
 import { createTask, createAlert, createReport } from "@/services/quickAddService";
 
@@ -38,7 +39,7 @@ interface FormConfig {
 const QUICK_FORMS: Record<string, FormConfig> = {
   tarea: {
     title: "Nueva tarea", icon: Calendar, accent: "#0F4395",
-    done: (d) => `Tarea “${d.nombre}” agregada al cronograma`,
+    done: (d) => `Tarea "${d.nombre}" agregada al cronograma`,
     fields: [
       { id: "nombre", label: "Nombre de la tarea", type: "text", placeholder: "Ej: Hormigonado losa +4", required: true },
       { id: "rubro",  label: "Rubro", type: "select", addable: true, source: "rubros" },
@@ -48,7 +49,7 @@ const QUICK_FORMS: Record<string, FormConfig> = {
   },
   critico: {
     title: "Reportar crítico", icon: CircleExclamation, accent: "#EF4444",
-    done: (d) => `Alerta “${d.titulo}” reportada`,
+    done: (d) => `Alerta "${d.titulo}" reportada`,
     fields: [
       { id: "titulo", label: "Título del problema", type: "text", placeholder: "Ej: Falla en Grúa Torre 2", required: true },
       { id: "nivel",  label: "Nivel", type: "select", options: ["Crítico", "Importante", "Moderado"] },
@@ -57,7 +58,7 @@ const QUICK_FORMS: Record<string, FormConfig> = {
   },
   pedido: {
     title: "Nuevo pedido", icon: Box, accent: "#F59E0B",
-    done: (d) => `Pedido de “${d.material}” creado`,
+    done: (d) => `Pedido de "${d.material}" creado`,
     fields: [
       { id: "material", label: "Material", type: "text", placeholder: "Ej: Cemento Portland 50 kg", required: true },
       { id: "cantidad", label: "Cantidad", type: "text", placeholder: "Ej: 120 bolsas" },
@@ -75,11 +76,11 @@ const QUICK_FORMS: Record<string, FormConfig> = {
   },
   persona: {
     title: "Invitar persona", icon: Persons, accent: "#22C55E",
-    done: (d) => `Invitación enviada a ${d.nombre || "la persona"}`,
+    done: (d) => `Enlace de invitación generado para ${d.nombre || "la persona"}`,
     fields: [
       { id: "nombre", label: "Nombre", type: "text", placeholder: "Ej: Marta Robles", required: true },
       { id: "tel",    label: "WhatsApp", type: "text", placeholder: "+54 9 11 …" },
-      { id: "rol",    label: "Rol", type: "select", options: ["Director de obra", "Capataz", "Compras", "Arquitecto/a", "Cliente / propietario"] },
+      { id: "rol",    label: "Rol", type: "select", disabled: true },
     ],
   },
 };
@@ -98,22 +99,33 @@ export function QuickAddModal({ kind, obraId, onClose, onDone }: Props) {
   const [adding, setAdding] = useState<string | null>(null);
   const [addVal, setAddVal] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const { data: lookup } = useDashboardData();
+  const [qrLink, setQrLink] = useState<string | null>(null);
+  const { data: lookup, refreshDashboard } = useDashboardData();
 
   useEffect(() => {
     if (!kind) return;
-    setData({});
+    const defaults: Record<string, string> = {};
+    const form = QUICK_FORMS[kind];
+    if (form) {
+      for (const f of form.fields) {
+        if (f.type === "select" && f.options?.length) {
+          defaults[f.id] = f.options[0];
+        }
+      }
+    }
+    setData(defaults);
     setExtraOpts({});
     setAdding(null);
     setAddVal("");
+    setQrLink(null);
   }, [kind]);
 
   useEffect(() => {
     if (!kind) return;
-    const k = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const k = (e: KeyboardEvent) => { if (e.key === "Escape") { if (qrLink) setQrLink(null); else onClose(); } };
     window.addEventListener("keydown", k);
     return () => window.removeEventListener("keydown", k);
-  }, [kind, onClose]);
+  }, [kind, onClose, qrLink]);
 
   if (!cfg) return null;
 
@@ -129,8 +141,15 @@ export function QuickAddModal({ kind, obraId, onClose, onDone }: Props) {
       if (kind === "tarea") await createTask(obraId, data);
       else if (kind === "critico") await createAlert(obraId, data);
       else if (kind === "reporte") await createReport(obraId, data);
+      else if (kind === "persona") {
+        const phone = process.env.NEXT_PUBLIC_BOT_PHONE;
+        const msg = encodeURIComponent(`!iniciar ${data.nombre} ${obraId}`);
+        setQrLink(`https://wa.me/${phone}?text=${msg}`);
+        return;
+      }
       onDone(cfg.done(data));
       onClose();
+      refreshDashboard().catch(() => {});
     } catch (e: unknown) {
       onDone(e instanceof Error ? e.message : "Error al guardar");
     } finally {
@@ -139,6 +158,50 @@ export function QuickAddModal({ kind, obraId, onClose, onDone }: Props) {
   };
 
   const Icon = cfg.icon;
+
+  const closeQr = () => { setQrLink(null); onClose(); };
+
+  const copyLink = async () => {
+    if (!qrLink) return;
+    try {
+      await navigator.clipboard.writeText(qrLink);
+      onDone("Enlace copiado al portapapeles");
+    } catch {
+      onDone("No se pudo copiar el enlace");
+    }
+  };
+
+  if (qrLink) {
+    return (
+      <div onClick={closeQr} className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-fade-task">
+        <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-[380px] rounded-2xl shadow-big p-6 flex flex-col items-center gap-5 animate-modal-pop">
+          <div className="text-center">
+            <div className="text-[15px] font-extrabold">Invitación para {data.nombre}</div>
+            <div className="text-[11px] text-slate-500 mt-1">Escaneá el código o compartí el enlace</div>
+          </div>
+
+          <div className="bg-white p-3 rounded-xl border border-slate-200">
+            <QRCodeSVG value={qrLink} size={220} level="M" />
+          </div>
+
+          <div className="w-full text-[11px] text-slate-500 bg-slate-50 rounded-lg px-3 py-2 truncate text-center select-all">
+            {qrLink}
+          </div>
+
+          <div className="flex gap-2 w-full">
+            <button onClick={copyLink}
+              className="flex-1 text-[12px] font-bold rounded-md px-4 py-[9px] bg-primary hover:bg-primary-700 text-white transition-colors">
+              Copiar enlace
+            </button>
+            <button onClick={closeQr}
+              className="flex-1 text-[12px] font-bold rounded-md px-4 py-[9px] border border-slate-200 text-slate-600 hover:text-slate-950 transition-colors">
+              Cerrar
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div onClick={onClose} className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-fade-task">

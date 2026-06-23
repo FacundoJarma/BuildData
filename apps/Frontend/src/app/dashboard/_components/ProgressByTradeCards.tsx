@@ -31,7 +31,7 @@ function ProgressByTradeCards({ data, onItemClick, onNewCategory, onViewAll }: P
           className="justify-center"
           onClick={onNewCategory}
         >
-          Nueva categoría
+          Nuevo Rubro
         </Button>
       </div>
       <div className="p-3 space-y-1">

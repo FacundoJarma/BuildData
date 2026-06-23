@@ -21,8 +21,8 @@ async function executePending(pending: PendingQuery, obraNombre: string): Promis
       console.log(`[executePending] → ${method} ${endpoint} para ${tag}`);
       console.log(`[executePending] payload: ${JSON.stringify(payload)}`);
       try {
-        const result = await callEndpoint(method, endpoint, payload);
-        console.log(`[executePending] respuesta: ${JSON.stringify(result)}`);
+        //const result = await callEndpoint(method, endpoint, payload);
+        //console.log(`[executePending] respuesta: ${JSON.stringify(result)}`);
       } catch (error) {
         console.error(`[executePending] error llamando ${endpoint}:`, error);
         throw error;

@@ -83,7 +83,7 @@ export function CategoryModal({ open, initial, availableTasks, onClose, onSave }
               <ChartBar width={16} height={16} />
             </div>
             <div>
-              <div className="text-[15px] font-extrabold display-tight">{initial ? "Editar categoría" : "Nueva categoría"}</div>
+              <div className="text-[15px] font-extrabold display-tight">{initial ? "Editar rubro" : "Nuevo rubro"}</div>
               <div className="text-[11px] text-slate-500">El progreso se calcula con las tareas que adjuntes</div>
             </div>
           </div>
@@ -152,7 +152,7 @@ export function CategoryModal({ open, initial, availableTasks, onClose, onSave }
             <button onClick={onClose} className="text-[12px] font-bold text-slate-600 hover:text-slate-950 px-3 py-[8px]">Cancelar</button>
             <button onClick={submit} disabled={!canSave}
               className={"inline-flex items-center gap-2 text-[13px] font-bold rounded-md px-4 py-[9px] transition-colors " + (canSave ? "bg-primary hover:bg-primary-700 text-white" : "bg-slate-200 text-slate-500 cursor-not-allowed")}>
-              {initial ? "Guardar" : "Crear categoría"} <Check width={14} height={14} />
+              {initial ? "Guardar" : "Crear rubro"} <Check width={14} height={14} />
             </button>
           </div>
         </div>

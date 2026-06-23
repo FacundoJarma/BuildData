@@ -39,11 +39,13 @@ export async function createTask(obraId: string, data: Record<string, string>) {
 export async function createAlert(obraId: string, data: Record<string, string>) {
   const { data: { session } } = await supabase.auth.getSession();
 
+  console.log("Creating alert with data:", data);
+
   const payload = {
     obra_id: obraId,
     titulo: data.titulo,
     subtitulo: data.desc || "",
-    severity: mapNivelToSeverity(data.nivel || "attention"),
+    severity: mapNivelToSeverity(data.nivel || "attention") || "critical",
   };
 
   const res = await fetch(`${API_URL}/alertas`, {
@@ -59,8 +61,9 @@ export async function createAlert(obraId: string, data: Record<string, string>) 
     const err = await res.json().catch(() => ({}));
     throw new Error(err.message || "Error al crear alerta");
   }
-
-  return res.json();
+  const alerta = await res.json();
+  console.log("Alert created successfully:", alerta);
+  return alerta;
 }
 
 export async function createReport(obraId: string, data: Record<string, string>) {
@@ -87,6 +90,7 @@ export async function createReport(obraId: string, data: Record<string, string>)
     const err = await res.json().catch(() => ({}));
     throw new Error(err.message || "Error al crear reporte");
   }
-  console.log("Report created successfully:", await res.json());
-  return res.json();
+  const reporte = await res.json();
+  console.log("Report created successfully:", reporte);
+  return reporte;
 }

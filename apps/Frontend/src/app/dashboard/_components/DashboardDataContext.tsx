@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useRef, type ReactNode } from "react";
 import type { TaskItem } from "@/types/dashboard";
 
 export interface RubroInfo {
@@ -18,18 +18,31 @@ export interface LookupData {
 interface ContextValue {
   data: LookupData;
   setLookupData: (data: LookupData) => void;
+  refreshDashboard: () => Promise<void>;
+  setRefreshDashboardRef: (fn: () => Promise<void>) => void;
 }
+
+const noop = async () => {};
 
 const DashboardDataContext = createContext<ContextValue>({
   data: { rubros: [], rubroMap: {}, tasks: [], workers: [] },
   setLookupData: () => {},
+  refreshDashboard: noop,
+  setRefreshDashboardRef: () => {},
 });
 
 export function DashboardDataProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<LookupData>({ rubros: [], rubroMap: {}, tasks: [], workers: [] });
   const setLookupData = useCallback((d: LookupData) => setData(d), []);
+
+  const refreshRef = useRef<() => Promise<void>>(noop);
+  const refreshDashboard = useCallback(async () => refreshRef.current(), []);
+  const setRefreshDashboardRef = useCallback((fn: () => Promise<void>) => {
+    refreshRef.current = fn;
+  }, []);
+
   return (
-    <DashboardDataContext.Provider value={{ data, setLookupData }}>
+    <DashboardDataContext.Provider value={{ data, setLookupData, refreshDashboard, setRefreshDashboardRef }}>
       {children}
     </DashboardDataContext.Provider>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   DashboardContent,
@@ -8,6 +8,7 @@ import {
 } from "@/app/dashboard/_components";
 import type { DashboardData } from "@/types/dashboard";
 import { getDashboard } from "@/services/dashboardService";
+import { useDashboardData } from "@/app/dashboard/_components/DashboardDataContext";
 import DashboardLoading from "./loading";
 
 function DashboardInner() {
@@ -16,16 +17,27 @@ function DashboardInner() {
   const [loading, setLoading] = useState(false);
 
   const [data, setData] = useState<DashboardData | null>(null);
+  const { setRefreshDashboardRef } = useDashboardData();
 
-  useEffect(() => {
-    if (obraId) {
-      setLoading(true);
-      getDashboard(obraId).then((data) => {
-        setData(data);
-        setLoading(false);
-      });
+  const refresh = useCallback(async () => {
+    if (!obraId) return;
+    setLoading(true);
+    try {
+      const fresh = await getDashboard(obraId);
+      setData(fresh);
+    } finally {
+      setLoading(false);
     }
   }, [obraId]);
+
+  useEffect(() => {
+    setRefreshDashboardRef(refresh);
+    return () => setRefreshDashboardRef(async () => {});
+  }, [refresh, setRefreshDashboardRef]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
 
   if(loading) return <DashboardLoading />;
   
