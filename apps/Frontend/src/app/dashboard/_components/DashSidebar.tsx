@@ -13,6 +13,7 @@ import {
   Persons,
   Gear,
   CircleInfo,
+  ChevronLeft,
 } from "@gravity-ui/icons";
 import { useDashboardData } from "./DashboardDataContext";
 
@@ -59,6 +60,13 @@ export function DashSidebar({
             <div className="text-[11px] text-white/60 mt-[1px]">{projectSub}</div>
           )}
         </div>
+        <Link
+          href="/projects"
+          className="flex items-center rounded-md mt-4 font-semibold text-white/70"
+        >
+          <ChevronLeft width={10} height={10} className="text-white/55" />
+          <span className="flex-1 text-[10px]">Volver a mis obras</span>
+        </Link>
       </div>
 
       {/* Nav */}

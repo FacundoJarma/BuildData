@@ -25,13 +25,19 @@ export function ActivityFeed({ items, onItemClick }: Props) {
             <button
               key={i}
               onClick={() => onItemClick?.(a)}
-              className="w-full px-4 py-[10px] flex items-center gap-3 hover:bg-slate-50 transition-colors text-left"
+              className="w-full px-4 py-[10px] flex items-start gap-3 hover:bg-slate-50 transition-colors text-left"
             >
               <DAvatar initials={a.initials} size={30} />
-              <div className="flex-1 min-w-0 text-[12px] leading-snug">
-                <b className="font-bold">{a.name}</b> {a.action}
+              <div className="flex-1 min-w-0">
+                <div className="text-[12px] leading-snug">
+                  <b className="font-bold">{a.name}</b>
+                  {a.tipo && <span className="text-slate-500"> · {a.tipo}</span>}
+                </div>
+                {a.texto && (
+                  <div className="text-[11px] text-slate-400 mt-[2px] line-clamp-2">{a.texto}</div>
+                )}
               </div>
-              <div className="text-[10px] text-slate-500 tnum">{a.time}</div>
+              <div className="text-[10px] text-slate-500 tnum shrink-0 mt-[2px]">{a.time}</div>
             </button>
           ))
         )}

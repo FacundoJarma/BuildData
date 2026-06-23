@@ -21,6 +21,7 @@ import proveedoresRoutes from "./routes/proveedores.js";
 import usuariosRoutes from "./routes/usuarios.js";
 import materialesRoutes from "./routes/materiales.js";
 import gastosRoutes from "./routes/gastos.js";
+import actividadRoutes from "./routes/actividad.js";
 import reportesRoutes from "./routes/reportes.js";
 import obrerosRoutes from "./routes/obreros.js";
 
@@ -78,6 +79,9 @@ app.use("/materiales", materialesRoutes);
 
 // Gastos
 app.use("/gastos", gastosRoutes);
+
+// Actividad
+app.use("/actividad", actividadRoutes);
 
 // Reportes
 app.use("/reportes", reportesRoutes);

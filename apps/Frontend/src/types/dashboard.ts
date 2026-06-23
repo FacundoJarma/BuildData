@@ -56,6 +56,8 @@ export interface ActivityFeedItem {
   initials: string;
   name: string;
   action: string;
+  tipo?: string;
+  texto?: string;
   time: string;
 }
 

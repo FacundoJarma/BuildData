@@ -18,6 +18,11 @@ interface Props {
 }
 
 export function BudgetCard({ budget, budgetBreakdown, onViewBreakdown, onExport }: Props) {
+  console.log("BudgetCard render", budget, budgetBreakdown);
+  const ejecutadoPct = budget.total > 0 ? Math.round((budget.ejecutado / budget.total) * 100) : 0;
+  const comprometidoPct = 0;
+  const librePct = budget.total > 0 ? Math.round((budget.disponible / budget.total) * 100) : 0;
+
   return (
     <div className="blueprint-bg rounded-lg p-5 text-white relative overflow-hidden flex flex-col">
       <div className="flex items-center justify-between mb-4">
@@ -46,7 +51,7 @@ export function BudgetCard({ budget, budgetBreakdown, onViewBreakdown, onExport 
             {formatCurrency(budget.ejecutado)}
           </div>
           <div className="text-[10px] font-semibold text-white/60">
-            {budget.ejecutadoPct} %
+            {ejecutadoPct} %
           </div>
         </div>
         <div>
@@ -57,7 +62,7 @@ export function BudgetCard({ budget, budgetBreakdown, onViewBreakdown, onExport 
             {formatCurrency(budget.disponible)}
           </div>
           <div className="text-[10px] font-semibold text-accent/80">
-            {budget.librePct} %
+            {librePct} %
           </div>
         </div>
       </div>
@@ -65,26 +70,26 @@ export function BudgetCard({ budget, budgetBreakdown, onViewBreakdown, onExport 
       <div className="mb-2">
         <div className="h-[10px] w-full rounded-full overflow-hidden flex bg-white/10">
           <div
-            style={{ width: `${budget.ejecutadoPct}%` }}
+            style={{ width: `${ejecutadoPct}%` }}
             className="h-full bg-accent"
           />
           <div
-            style={{ width: `${budget.comprometidoPct}%` }}
+            style={{ width: `${comprometidoPct}%` }}
             className="h-full bg-accent/55"
           />
         </div>
         <div className="flex items-center gap-4 mt-2 text-[10px] text-white/65">
           <span className="inline-flex items-center gap-[6px]">
             <span className="w-2 h-2 rounded-full bg-accent" /> Ejecutado{" "}
-            {budget.ejecutadoPct} %
+            {ejecutadoPct} %
           </span>
           <span className="inline-flex items-center gap-[6px]">
             <span className="w-2 h-2 rounded-full bg-accent/55" />{" "}
-            Comprometido {budget.comprometidoPct} %
+            Comprometido {comprometidoPct} %
           </span>
           <span className="inline-flex items-center gap-[6px]">
             <span className="w-2 h-2 rounded-full bg-white/15" /> Libre{" "}
-            {budget.librePct} %
+            {librePct} %
           </span>
         </div>
       </div>

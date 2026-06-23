@@ -97,6 +97,8 @@ function transformDashboard(api: ApiDashboardResponse): DashboardData {
       initials: item.initials,
       name:     item.name,
       action:   item.action,
+      tipo:     item.tipo,
+      texto:    item.texto,
       time:     formatTime(item.timestamp),
     })),
 
@@ -151,6 +153,6 @@ export async function getDashboard(obraId: string): Promise<DashboardData> {
   const data: ApiDashboardResponse = await res.json();
 
   console.log(data);
-
+  
   return transformDashboard(data);
 }

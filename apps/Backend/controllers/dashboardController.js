@@ -88,8 +88,18 @@ const pedidosConItems = await Promise.all(
 
     // Presupuesto
     const presupuestoResult = await pool.query(
-      `SELECT total, ejecutado, comprometido, updated_at
-       FROM presupuestos WHERE obra_id = $1`,
+      `SELECT
+        p.total,
+        COALESCE((
+          SELECT SUM(pr.spent)
+          FROM presupuesto_rubros pr
+          JOIN rubros r ON r.id = pr.rubro_id
+          WHERE r.obra_id = $1
+        ), 0) AS ejecutado,
+        p.comprometido,
+        p.updated_at
+       FROM presupuestos p
+       WHERE p.obra_id = $1`,
       [obraId]
     );
     const pres = presupuestoResult.rows[0] || { total: 0, ejecutado: 0, comprometido: 0 };
@@ -117,16 +127,18 @@ const pedidosConItems = await Promise.all(
 
     // Activity feed
     const actividadResult = await pool.query(
-      `SELECT
+       `SELECT
         UPPER(LEFT(p.nombre, 1) || LEFT(SPLIT_PART(p.nombre, ' ', 2), 1)) AS initials,
         p.nombre AS name,
         a.accion AS action,
+        a.tipo,
+        a.texto,
         a.created_at AS timestamp
        FROM actividad a
        JOIN perfiles p ON p.id = a.usuario_id
        WHERE a.obra_id = $1
        ORDER BY a.created_at DESC
-       LIMIT 10`,
+       LIMIT 5`,
       [obraId]
     );
 

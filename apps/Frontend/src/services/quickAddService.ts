@@ -71,13 +71,13 @@ export async function createReport(obraId: string, data: Record<string, string>)
 
   const payload = {
     obra_id: obraId,
-    titulo: data.tipo || "Avance de tarea",
-    contenido: data.texto,
+    tipo: data.tipo || "Avance de tarea",
+    texto: data.texto,
   };
 
-  console.log("Creating report with payload:", payload);
+  console.log("Creating actividad with payload:", payload);
 
-  const res = await fetch(`${API_URL}/reportes`, {
+  const res = await fetch(`${API_URL}/actividad`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -88,9 +88,9 @@ export async function createReport(obraId: string, data: Record<string, string>)
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || "Error al crear reporte");
+    throw new Error(err.message || "Error al crear actividad");
   }
-  const reporte = await res.json();
-  console.log("Report created successfully:", reporte);
-  return reporte;
+  const actividad = await res.json();
+  console.log("Actividad created successfully:", actividad);
+  return actividad;
 }

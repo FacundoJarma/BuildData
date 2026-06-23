@@ -77,10 +77,12 @@ export interface ApiTradeProgress {
 }
 
 export interface ApiActivityFeedItem {
-  initials: string;           // o bien el back lo manda, más simple
+  initials: string;
   name: string;
   action: string;
-  timestamp: string;          // ISO 8601 — el front formatea como "08:42"
+  tipo?: string;
+  texto?: string;
+  timestamp: string;
 }
 
 export interface ApiAlertItem {
