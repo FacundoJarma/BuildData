@@ -14,6 +14,7 @@ import {
   Gear,
   CircleInfo,
 } from "@gravity-ui/icons";
+import { useDashboardData } from "./DashboardDataContext";
 
 const NAV_ITEMS: { id: string; label: string; href: string; icon: React.ReactNode; badge?: string | number }[] = [
   { id: "dashboard", label: "Dashboard", href: "/dashboard", icon: <LayoutHeaderCellsLarge width={16} height={16} /> },
@@ -28,15 +29,16 @@ const NAV_ITEMS: { id: string; label: string; href: string; icon: React.ReactNod
 ];
 
 export function DashSidebar({
-  projectLabel = "Edificio Belgrano",
-  projectSub = "Sector C · 68% completa",
-
+  projectLabel: explicitLabel,
+  projectSub: explicitSub,
 }: {
   projectLabel?: string;
   projectSub?: string;
-
 }) {
   const pathname = usePathname();
+  const { obraName, obraProgress } = useDashboardData();
+  const projectLabel = explicitLabel ?? (obraName || "Edificio Belgrano");
+  const projectSub = `0% completa`;
 
   return (
     <aside className="w-[220px] bg-ink-deep text-white flex flex-col flex-none">

@@ -20,6 +20,10 @@ interface ContextValue {
   setLookupData: (data: LookupData) => void;
   refreshDashboard: () => Promise<void>;
   setRefreshDashboardRef: (fn: () => Promise<void>) => void;
+  obraId: string;
+  obraName: string;
+  obraProgress: number;
+  setObraInfo: (id: string, name: string, progress: number) => void;
 }
 
 const noop = async () => {};
@@ -29,6 +33,10 @@ const DashboardDataContext = createContext<ContextValue>({
   setLookupData: () => {},
   refreshDashboard: noop,
   setRefreshDashboardRef: () => {},
+  obraId: "",
+  obraName: "",
+  obraProgress: 0,
+  setObraInfo: () => {},
 });
 
 export function DashboardDataProvider({ children }: { children: ReactNode }) {
@@ -41,8 +49,17 @@ export function DashboardDataProvider({ children }: { children: ReactNode }) {
     refreshRef.current = fn;
   }, []);
 
+  const [obraId, setObraId] = useState("");
+  const [obraName, setObraName] = useState("");
+  const [obraProgress, setObraProgress] = useState(0);
+  const setObraInfo = useCallback((id: string, name: string, progress: number) => {
+    setObraId(id);
+    setObraName(name);
+    setObraProgress(progress);
+  }, []);
+
   return (
-    <DashboardDataContext.Provider value={{ data, setLookupData, refreshDashboard, setRefreshDashboardRef }}>
+    <DashboardDataContext.Provider value={{ data, setLookupData, refreshDashboard, setRefreshDashboardRef, obraId, obraName, obraProgress, setObraInfo }}>
       {children}
     </DashboardDataContext.Provider>
   );

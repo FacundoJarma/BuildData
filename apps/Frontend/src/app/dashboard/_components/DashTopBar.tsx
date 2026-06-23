@@ -4,8 +4,9 @@ import {
   Magnifier,
   Bell,
 } from "@gravity-ui/icons";
-import { DAvatar } from "@/components/ui/DAvatar";
 import { QuickAddMenu } from "./QuickAddMenu";
+import { AvatarMenu } from "./AvatarMenu";
+import { useDashboardData } from "./DashboardDataContext";
 
 export function DashTopBar({
   crumb = "Dashboard",
@@ -14,10 +15,12 @@ export function DashTopBar({
   crumb?: string;
   onQuickAdd?: (kind: string) => void;
 }) {
+  const { obraName } = useDashboardData();
+
   return (
     <header className="h-[52px] px-5 border-b border-slate-200 bg-white/85 backdrop-blur flex items-center justify-between gap-3 flex-none">
       <div className="text-[12px] text-slate-500">
-        Obra Belgrano{" "}
+        {obraName || "Obra"}{" "}
         <span className="mx-2 text-slate-300">/</span>
         <b className="text-slate-950">{crumb}</b>
       </div>
@@ -31,7 +34,7 @@ export function DashTopBar({
           <Bell width={15} height={15} />
           <span className="absolute top-[6px] right-[6px] w-2 h-2 rounded-full bg-critical border-2 border-white" />
         </button>
-        <DAvatar size={32} />
+        <AvatarMenu />
       </div>
 
     </header>

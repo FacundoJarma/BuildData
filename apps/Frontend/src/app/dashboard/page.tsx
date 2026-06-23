@@ -17,7 +17,7 @@ function DashboardInner() {
   const [loading, setLoading] = useState(false);
 
   const [data, setData] = useState<DashboardData | null>(null);
-  const { setRefreshDashboardRef } = useDashboardData();
+  const { setRefreshDashboardRef, setObraInfo } = useDashboardData();
 
   const refresh = useCallback(async () => {
     if (!obraId) return;
@@ -25,10 +25,11 @@ function DashboardInner() {
     try {
       const fresh = await getDashboard(obraId);
       setData(fresh);
+      setObraInfo(obraId, fresh.obra.name, fresh.stats.avanceTotal);
     } finally {
       setLoading(false);
     }
-  }, [obraId]);
+  }, [obraId, setObraInfo]);
 
   useEffect(() => {
     setRefreshDashboardRef(refresh);
