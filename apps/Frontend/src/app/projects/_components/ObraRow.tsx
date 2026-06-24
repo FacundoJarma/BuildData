@@ -33,7 +33,7 @@ function MoreIcon() {
 export function ObraRow({ obra }: { obra: Obra }) {
   const s = STATUS[obra.status];
   return (
-    <Link href={`/dashboard?id=${obra.id}`} className="group grid grid-cols-[40px_1fr_140px_120px_180px_100px_24px] items-center gap-4 py-3 px-4 hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-b-0">
+    <Link href={`/${obra.id}/dashboard`} className="group grid grid-cols-[40px_1fr_140px_120px_180px_100px_24px] items-center gap-4 py-3 px-4 hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-b-0">
       <div className="w-9 h-9 rounded-md flex items-center justify-center" style={{ background: obra.color + "20" }}>
         <BarIcon color={obra.color} />
       </div>

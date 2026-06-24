@@ -1,0 +1,1 @@
+export { ScreenActividad } from "./ScreenActividad";

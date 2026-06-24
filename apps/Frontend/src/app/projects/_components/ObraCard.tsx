@@ -16,7 +16,7 @@ function MoreIcon() {
 export function ObraCard({ obra, cover = "blueprint" }: { obra: Obra; cover?: string }) {
   const s = STATUS[obra.status];
   return (
-    <Link href={`/dashboard?id=${obra.id}`} className="obra-card group bg-white border border-slate-200 rounded-lg overflow-hidden shadow-card hover:shadow-pop hover:border-primary transition-all">
+    <Link href={`/${obra.id}/dashboard`} className="obra-card group bg-white border border-slate-200 rounded-lg overflow-hidden shadow-card hover:shadow-pop hover:border-primary transition-all">
       <ObraThumb obra={obra} height={104} variant={cover as "blueprint" | "minimal" | "swatch"} />
       <div className="p-4 obra-card-body">
         <div className="flex items-start justify-between gap-2 mb-1">

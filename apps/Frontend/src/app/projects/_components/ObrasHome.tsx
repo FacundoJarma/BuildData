@@ -155,7 +155,7 @@ export function ObrasHome({
                   return (
                     <a
                       key={o.id}
-                      href={`/dashboard?id=${o.id}`}
+                      href={`/${o.id}/dashboard`}
                       className="group bg-white border border-slate-200 rounded-lg p-4 flex gap-3 hover:border-primary hover:shadow-card2 transition-all"
                     >
                       <div

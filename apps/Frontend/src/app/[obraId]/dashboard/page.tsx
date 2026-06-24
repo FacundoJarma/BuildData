@@ -1,21 +1,22 @@
 "use client";
 
-import { useState, useEffect, useCallback, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { use, useState, useEffect, useCallback } from "react";
 import {
   DashboardContent,
   EmptyDashboardContent,
-} from "@/app/dashboard/_components";
+} from "@/app/[obraId]/dashboard/_components";
 import type { DashboardData } from "@/types/dashboard";
 import { getDashboard } from "@/services/dashboardService";
-import { useDashboardData } from "@/app/dashboard/_components/DashboardDataContext";
+import { useDashboardData } from "@/app/[obraId]/dashboard/_components/DashboardDataContext";
 import DashboardLoading from "./loading";
 
-function DashboardInner() {
-  const searchParams = useSearchParams();
-  const obraId = searchParams.get("id");
+export default function DashboardPage({
+  params,
+}: {
+  params: Promise<{ obraId: string }>;
+}) {
+  const { obraId } = use(params);
   const [loading, setLoading] = useState(false);
-
   const [data, setData] = useState<DashboardData | null>(null);
   const { setRefreshDashboardRef, setObraInfo } = useDashboardData();
 
@@ -41,16 +42,8 @@ function DashboardInner() {
   }, [refresh]);
 
   if(loading) return <DashboardLoading />;
-  
+
   if (!data) return <EmptyDashboardContent />;
 
   return <DashboardContent data={data} />;
-}
-
-export default function DashboardPage() {
-  return (
-    <Suspense fallback={<DashboardLoading />}>
-      <DashboardInner />
-    </Suspense>
-  );
 }

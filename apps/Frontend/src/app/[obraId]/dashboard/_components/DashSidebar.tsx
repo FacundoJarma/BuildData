@@ -17,17 +17,21 @@ import {
 } from "@gravity-ui/icons";
 import { useDashboardData } from "./DashboardDataContext";
 
-const NAV_ITEMS: { id: string; label: string; href: string; icon: React.ReactNode; badge?: string | number }[] = [
-  { id: "dashboard", label: "Dashboard", href: "/dashboard", icon: <LayoutHeaderCellsLarge width={16} height={16} /> },
-  { id: "cronograma", label: "Cronograma", href: "/construction?section=Cronograma", icon: <Calendar width={16} height={16} /> },
-  { id: "alertas", label: "Alertas", href: "/construction?section=Alertas", icon: <CircleExclamation width={16} height={16} /> },
-  { id: "pedidos", label: "Pedidos", href: "/construction?section=Pedidos", icon: <Box width={16} height={16} /> },
-  { id: "stock", label: "Stock", href: "/construction?section=Stock", icon: <Box width={16} height={16} /> },
-  { id: "recibos", label: "Recibos", href: "/construction?section=Recibos", icon: <Receipt width={16} height={16} /> },
-  { id: "actividad", label: "Actividad", href: "/construction?section=Actividad", icon: <CircleInfo width={16} height={16} /> },
-  { id: "reportes", label: "Reportes", href: "/construction?section=Reportes", icon: <ChartBar width={16} height={16} /> },
-  { id: "equipo", label: "Equipo", href: "/construction?section=Equipo", icon: <Persons width={16} height={16} /> },
-];
+function buildNavItems(obraId: string): { id: string; label: string; href: string; icon: React.ReactNode; badge?: string | number }[] {
+  const prefix = `/${obraId}/dashboard`;
+  return [
+    { id: "dashboard",  label: "Dashboard",   href: prefix, icon: <LayoutHeaderCellsLarge width={16} height={16} /> },
+    { id: "cronograma", label: "Cronograma",  href: `${prefix}/cronograma`, icon: <Calendar width={16} height={16} /> },
+    { id: "alertas",    label: "Alertas",     href: `${prefix}/alertas`,    icon: <CircleExclamation width={16} height={16} /> },
+    { id: "pedidos",    label: "Pedidos",     href: `${prefix}/pedidos`,    icon: <Box width={16} height={16} /> },
+    { id: "stock",      label: "Stock",       href: `${prefix}/stock`,      icon: <Box width={16} height={16} /> },
+    { id: "recibos",    label: "Recibos",     href: `${prefix}/recibos`,    icon: <Receipt width={16} height={16} /> },
+    { id: "presupuesto",label: "Presupuesto", href: `${prefix}/presupuesto`,icon: <ChartBar width={16} height={16} /> },
+    { id: "actividad",  label: "Actividad",   href: `${prefix}/actividad`,  icon: <CircleInfo width={16} height={16} /> },
+    { id: "reportes",   label: "Reportes",    href: `${prefix}/reportes`,   icon: <ChartBar width={16} height={16} /> },
+    { id: "equipo",     label: "Equipo",      href: `${prefix}/equipo`,     icon: <Persons width={16} height={16} /> },
+  ];
+}
 
 export function DashSidebar({
   projectLabel: explicitLabel,
@@ -37,9 +41,10 @@ export function DashSidebar({
   projectSub?: string;
 }) {
   const pathname = usePathname();
-  const { obraName, obraProgress } = useDashboardData();
+  const { obraName, obraProgress, obraId } = useDashboardData();
   const projectLabel = explicitLabel ?? (obraName || "Edificio Belgrano");
   const projectSub = `0% completa`;
+  const navItems = buildNavItems(obraId);
 
   return (
     <aside className="w-[220px] bg-ink-deep text-white flex flex-col flex-none">
@@ -71,7 +76,7 @@ export function DashSidebar({
 
       {/* Nav */}
       <nav className="px-3 flex-1 flex flex-col gap-1">
-        {NAV_ITEMS.map((s) => {
+        {navItems.map((s) => {
           const on = pathname === s.href;
           return (
             <Link

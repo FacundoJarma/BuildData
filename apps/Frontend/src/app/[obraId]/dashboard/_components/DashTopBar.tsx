@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import {
   Magnifier,
   Bell,
@@ -8,13 +9,27 @@ import { QuickAddMenu } from "./QuickAddMenu";
 import { AvatarMenu } from "./AvatarMenu";
 import { useDashboardData } from "./DashboardDataContext";
 
+const CRUMB_MAP: Record<string, string> = {
+  dashboard: "Dashboard",
+  cronograma: "Cronograma",
+  alertas: "Alertas",
+  pedidos: "Pedidos",
+  stock: "Stock",
+  recibos: "Recibos",
+  presupuesto: "Presupuesto",
+  actividad: "Actividad",
+  reportes: "Reportes",
+  equipo: "Equipo",
+};
+
 export function DashTopBar({
-  crumb = "Dashboard",
   onQuickAdd,
 }: {
-  crumb?: string;
   onQuickAdd?: (kind: string) => void;
 }) {
+  const pathname = usePathname();
+  const segment = pathname.split("/").filter(Boolean).pop() || "dashboard";
+  const crumb = CRUMB_MAP[segment] || "Dashboard";
   const { obraName } = useDashboardData();
 
   return (
