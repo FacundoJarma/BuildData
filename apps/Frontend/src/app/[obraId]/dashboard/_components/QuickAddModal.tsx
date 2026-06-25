@@ -14,7 +14,9 @@ import {
 } from "@gravity-ui/icons";
 import { QRCodeSVG } from "qrcode.react";
 import { useDashboardData } from "./DashboardDataContext";
-import { createTask, createAlert, createReport } from "@/services/quickAddService";
+import { createTask } from "@/services/tareasService";
+import { createAlert } from "@/services/alertasService";
+import { createActividad } from "@/services/actividadService";
 
 interface FieldDef {
   id: string;
@@ -140,7 +142,7 @@ export function QuickAddModal({ kind, obraId, onClose, onDone }: Props) {
     try {
       if (kind === "tarea") await createTask(obraId, data);
       else if (kind === "critico") await createAlert(obraId, data);
-      else if (kind === "reporte") await createReport(obraId, data);
+      else if (kind === "reporte") await createActividad(obraId, data);
       else if (kind === "persona") {
         const phone = process.env.NEXT_PUBLIC_BOT_PHONE;
         const msg = encodeURIComponent(`!iniciar ${data.nombre} ${obraId}`);

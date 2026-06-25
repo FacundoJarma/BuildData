@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { CircleExclamation, Check, Box, Calendar, Sparkles, ArrowRight, Plus } from "@gravity-ui/icons";
-import { getActividad } from "@/services/mock/actividadService";
+import { getActividad } from "@/services/actividadService";
 import type { ActivityGroup } from "@/app/[obraId]/dashboard/actividad/data";
 import { KIND_ICONS, SUGGESTED_QUESTIONS, ANSWERS_DB } from "@/app/[obraId]/dashboard/actividad/data";
 import { DCard } from "@/components/ui/DCard";
@@ -28,18 +28,19 @@ function renderBold(text: string) {
   });
 }
 
-export function ScreenActividad() {
+export function ScreenActividad({ obraId }: { obraId: string }) {
   const [loading, setLoading] = useState(true);
   const [groups, setGroups] = useState<ActivityGroup[]>([]);
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
 
   useEffect(() => {
-    getActividad().then((data) => {
+    setLoading(true);
+    getActividad(obraId).then((data) => {
       setGroups(data.groups);
       setLoading(false);
-    });
-  }, []);
+    }).catch(() => setLoading(false));
+  }, [obraId]);
 
   const handleAsk = (q: string) => {
     setQuestion(q);
