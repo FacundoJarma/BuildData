@@ -1,42 +1,51 @@
 # BuildData — Guía para agentes IA
 
-BuildData es un bot de WhatsApp para gestión de obras. El usuario envía texto, audio o imágenes y el bot genera operaciones JSON para insertar/actualizar datos, requiriendo confirmación vía `!confirm`/`!cancel`.
+BuildData: bot WhatsApp + API REST + Frontend Web para gestión de obras de construcción. Monorepo Turborepo + Bun. El usuario envía texto/audio/imagen → LLM genera llamada a API REST (no SQL) → confirmación vía encuesta → ejecución.
 
-## Stack y comandos clave
+## Comandos clave
 
 | Comando | Uso |
 |---------|-----|
-| `bun run dev` | Turbo: corre WhatsApp-Bot + Frontend en paralelo |
-| `npx turbo run dev --filter=whatsapp-bot` | Solo el bot |
-| `npx turbo run dev --filter=frontend` | Solo frontend |
-| `bun --watch src/index.ts` | Modo dev directo (hot reload con bun) |
+| `bun run dev` | Turbo: WhatsApp-Bot + Frontend + Backend en paralelo |
+| `npx turbo run dev --filter=whatsapp-bot` | Solo bot (Express keep-alive en puerto 3000) |
+| `npx turbo run dev --filter=frontend` | Solo frontend (Next.js) |
+| `bun --watch src/index.ts` | Modo dev directo del bot (hot reload) |
+| `bun test` | Tests con Bun (apps/WhatsApp-Bot) |
+| `bun run lint` | Lints solo Frontend (WhatsApp-Bot no tiene lint) |
 
-- Sin test framework, sin typecheck, sin formatter configurados
-- `bun run lint` solo lintea Frontend (WhatsApp-Bot no tiene script lint)
-- Express en puerto 3000 y Next.js también por defecto → conflictos si corren juntos
-- Sin `.env.example` — crear manualmente en `apps/WhatsApp-Bot/.env`
+- **Backend no tiene package.json** → no funciona con `--filter=backend`. Correr manual: `node apps/Backend/server.js` (puerto 3001)
+- Sin `.env.example` — crear manualmente en `apps/WhatsApp-Bot/.env` y `apps/Backend/.env`
+- Express: bot en puerto 3000, Backend API en puerto 3001
+- Existe `bun.lock` y `package-lock.json` — usar `bun install`
 
 ## Arquitectura (lo que los nombres no dicen)
 
-- **LLM genera JSON, NO SQL**: `textToOperation()` devuelve `RawOperation` (`{action, table, data, where}`), no strings SQL
-- **Pending store es union type**: `PendingQuery = operation | comprobante | factura`
-- **Image handler implementado**: analiza comprobantes/facturas con Groq Llama 4 Scout (`vision.service.ts`)
-- **Comandos registrados**: `!ayuda`, `!confirm`, `!cancel`, `!iniciar` (registra usuario vía API externa)
-- **API service**: `api.service.ts` consume backend externo desde `API_URL`
+- **LLM genera endpoint + JSON body, NO SQL**: `textToOperation()` devuelve `{endpoint, method, data, comment}`, no un `RawOperation` con action/table/data
+- **Pending store es union type**: `PendingQuery = operation \| comprobante \| factura`
+- **Confirmación vía Poll**: `pollConfirmation.service.ts` envía encuesta "¿En qué obra?" → `handlePollVote()` → `executePending()` (la llamada a API está comentada — placeholder)
+- **Comandos registrados**: `!ayuda`, `!cancel`, `!iniciar`, `!obras` — **NO existe `!confirm`**
+- **Whitelist de comandos sin verificar obra**: `!iniciar` y `!ayuda` (saltan `getUserObras`)
+- **User cache**: `user.service.ts` cachea usuarios 5 min en Map en memoria
 
 ## Fuentes de verdad del schema
 
-- `llm.service.ts:41-53` → `SYSTEM_PROMPT` (definición que ve el LLM)
-- `services/tableSchema.ts` → FK relations e identity fields (para resolución de IDs)
+- `services/endpointSchema.ts` → define endpoints, parámetros requeridos/opcionales y fuentes (`llm`, `obra_poll`, `user_phone`, `auto`)
+- `services/llm.service.ts:10-33` → `SYSTEM_PROMPT` (lo que ve el LLM)
 - Si se cambia el schema, actualizar AMBOS archivos
 
 ## Servicios y modelos LLM
 
 | Servicio | Modelo | Notas |
 |----------|--------|-------|
-| `llm.service` | `llama-3.3-70b-versatile` | temperature=0, genera JSON con action/table/data |
+| `llm.service` | `llama-3.3-70b-versatile` | temperature=0, genera endpoint+JSON |
 | `transcription.service` | `whisper-large-v3-turbo` | escribe tmp en `./tmp/`, limpia en `finally` |
-| `vision.service` | `meta-llama/llama-4-scout-17b-16e-instruct` | analiza imágenes de comprobantes/facturas argentinas |
+| `vision.service` | `meta-llama/llama-4-scout-17b-16e-instruct` | analiza comprobantes/facturas argentinas vía Groq |
+
+## Variables de entorno
+
+- **WhatsApp-Bot**: `GROQ_API_KEY`, `MONGO_URI`, `NODE_ENV`, `SUPABASE_SERVICE_ROLE_KEY`, `API_URL`
+- **Backend**: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `DATABASE_URL`
+- NUNCA comitear `.env`
 
 ## Patrones de código
 
@@ -45,7 +54,8 @@ Archivos:        kebab-case.ts  → *.handler.ts, *.command.ts, *.service.ts, *.
 Variables/func:  camelCase
 Interfaces:      PascalCase
 Async:           siempre Promise<T>
-Idioma bot:      español rioplatense, *negrita* WhatsApp, bloques código ```, emojis ✅❌⚠️
+Stores:          Map en memoria (pendingQuery, userCache con TTL 5 min)
+Idioma bot:      español rioplatense, *negrita* WhatsApp, bloques ```, emojis ✅❌⚠️
 ```
 
 ### Registrar comando nuevo
@@ -64,20 +74,20 @@ Idioma bot:      español rioplatense, *negrita* WhatsApp, bloques código ```, 
 
 ## Seguridad y gotchas
 
-- `.env` contiene `GROQ_API_KEY` y `MONGO_URI` — NUNCA comitear
+- `.env` contiene `GROQ_API_KEY`, `MONGO_URI`, `SUPABASE_SERVICE_ROLE_KEY` — NUNCA comitear
 - Dockerfile: build desde raíz del monorepo, solo copia `apps/WhatsApp-Bot/` al container
 - `mongoStore.ts` busca session zips en `.wwebjs_auth/`
 - `randomDelay(1000, 10000)` entre mensaje y respuesta (anti-detección)
-- En producción Puppeteer corre con `--no-sandbox --disable-setuid-sandbox`
-- `getPhoneNumber()` usa `message.getContact().number`
-- `tsconfig.json` module=commonjs (no module ESM a pesar de `"type": "module"` en root package.json)
+- En producción Puppeteer: `--no-sandbox --disable-setuid-sandbox`
+- `getPhoneNumber()` usa `message.getContact().number` (sin @c.us)
+- `tsconfig.json` `module: commonjs` (no ESM a pesar de `"type": "module"` en root package.json)
+- Backend tiene dos middlewares de auth: `botAuthMiddleware` (valida service role key directo) para `/bot/*`, `authMiddleware` (JWT Supabase via `auth.getUser()`) para el resto
+- `executePending()` en `pollConfirmation.service.ts` tiene la llamada `callEndpoint()` comentada — no ejecuta nada real todavía
 
-## Estado
+## Apps
 
-| Funcional | Pendiente |
-|-----------|-----------|
-| Texto → JSON LLM | Ejecución real contra DB (placeholder en confirmCommand) |
-| Voz → Whisper → texto | Backend API |
-| Imagen → análisis documento | Frontend con datos reales |
-| Sesión MongoDB vía RemoteAuth | Tests, rate limiting |
-| Express keep-alive (puerto 3000) | `.env.example` |
+| App | Puerto | Stack | Estado |
+|------|--------|-------|--------|
+| WhatsApp-Bot | 3000 | whatsapp-web.js, Express (keep-alive) | ✅ Funcional |
+| Backend | 3001 | Express + Supabase/PostgreSQL (15 rutas REST) | ✅ Implementado |
+| Frontend | Next.js default | Next.js 16, React 19, TailwindCSS 4 | 🚧 En desarrollo |
