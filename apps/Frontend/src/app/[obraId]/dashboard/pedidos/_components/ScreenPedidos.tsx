@@ -141,15 +141,17 @@ export function ScreenPedidos() {
         })}
       </div>
 
-      <OrderDrawer
-        order={selected!}
-        STATE={STATE_MAP}
-        fmt={fmtCurrency}
-        onClose={() => setSelected(null)}
-        onApprove={handleApprove}
-        onCancel={handleCancel}
-        onDeliver={() => { if (selected) { setDeliverFor(selected); setSelected(null); } }}
-      />
+      {selected && (
+        <OrderDrawer
+          order={selected}
+          STATE={STATE_MAP}
+          fmt={fmtCurrency}
+          onClose={() => setSelected(null)}
+          onApprove={handleApprove}
+          onCancel={handleCancel}
+          onDeliver={() => { setDeliverFor(selected); setSelected(null); }}
+        />
+      )}
 
       {showNew && (
         <NewOrderModal
