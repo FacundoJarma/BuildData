@@ -1,7 +1,7 @@
 "use client";
 
 import { Magnifier, CircleInfo, Bell } from "@gravity-ui/icons";
-import { DAvatar } from "@/components/ui/DAvatar";
+import { AvatarMenu } from "@/components/ui/AvatarMenu";
 
 export function WorkspaceTopbar({ query, onQuery }: { query: string; onQuery: (v: string) => void }) {
   return (
@@ -20,7 +20,7 @@ export function WorkspaceTopbar({ query, onQuery }: { query: string; onQuery: (v
         <Bell width={15} height={15} />
         <span className="absolute top-[6px] right-[6px] w-2 h-2 rounded-full bg-critical border-2 border-white" />
       </button>
-      <DAvatar size={32} />
+      <AvatarMenu />
     </header>
   );
 }

@@ -6,7 +6,7 @@ import {
   Bell,
 } from "@gravity-ui/icons";
 import { QuickAddMenu } from "./QuickAddMenu";
-import { AvatarMenu } from "./AvatarMenu";
+import { AvatarMenu } from "@/components/ui/AvatarMenu";
 import { useDashboardData } from "./DashboardDataContext";
 
 const CRUMB_MAP: Record<string, string> = {
