@@ -1,17 +1,17 @@
 -- 1. tareas: agregar asignado_a
-ALTER TABLE tareas ADD COLUMN IF NOT EXISTS asignado_a UUID REFERENCES usuarios(id);
+ALTER TABLE tareas ADD COLUMN IF NOT EXISTS asignado_a UUID REFERENCES personas(id);
 
 -- 2. subtareas: agregar created_by
-ALTER TABLE subtareas ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES usuarios(id);
+ALTER TABLE subtareas ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES personas(id);
 
 -- 3. pedidos_materiales: agregar aprobado_por y fecha_aprobacion
 ALTER TABLE pedidos_materiales
-  ADD COLUMN IF NOT EXISTS aprobado_por UUID REFERENCES usuarios(id),
+  ADD COLUMN IF NOT EXISTS aprobado_por UUID REFERENCES personas(id),
   ADD COLUMN IF NOT EXISTS fecha_aprobacion TIMESTAMP;
 
 -- 4. gastos: agregar usuario_id y pedido_id
 ALTER TABLE gastos
-  ADD COLUMN IF NOT EXISTS usuario_id UUID REFERENCES usuarios(id),
+  ADD COLUMN IF NOT EXISTS usuario_id UUID REFERENCES personas(id),
   ADD COLUMN IF NOT EXISTS pedido_id UUID REFERENCES pedidos_materiales(id);
 
 -- 5. mensajes: agregar estado de procesamiento
@@ -20,7 +20,7 @@ ALTER TABLE mensajes
   ADD COLUMN IF NOT EXISTS error_detalle TEXT;
 
 -- 6. alertas: agregar usuario_id destinatario
-ALTER TABLE alertas ADD COLUMN IF NOT EXISTS usuario_id UUID REFERENCES usuarios(id);
+ALTER TABLE alertas ADD COLUMN IF NOT EXISTS usuario_id UUID REFERENCES personas(id);
 
 -- 7. TABLA NUEVA: pedidos_items (detalle de cada pedido)
 CREATE TABLE IF NOT EXISTS pedidos_items (
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS movimientos_stock (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   material_id UUID REFERENCES materiales(id) ON DELETE CASCADE,
   obra_id UUID REFERENCES obras(id),
-  usuario_id UUID REFERENCES usuarios(id),
+  usuario_id UUID REFERENCES personas(id),
   tarea_id UUID REFERENCES tareas(id),
   tipo VARCHAR(20) NOT NULL, -- 'entrada' o 'salida'
   cantidad NUMERIC(10,2),

@@ -135,7 +135,7 @@ const pedidosConItems = await Promise.all(
         a.texto,
         a.created_at AS timestamp
        FROM actividad a
-       JOIN perfiles p ON p.id = a.usuario_id
+       JOIN personas p ON p.id = a.usuario_id
        WHERE a.obra_id = $1
        ORDER BY a.created_at DESC
        LIMIT 5`,

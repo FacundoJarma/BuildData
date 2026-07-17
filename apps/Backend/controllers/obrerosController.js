@@ -5,11 +5,11 @@ export async function getObreros(req, res) {
   const { obra_id } = req.params;
   try {
     const result = await pool.query(
-      `SELECT o.*, oo.rol, oo.joined_at
-       FROM obreros o
-       JOIN obreros_obras oo ON o.id = oo.obrero_id
-       WHERE oo.obra_id = $1
-       ORDER BY o.nombre ASC`,
+      `SELECT p.id, p.nombre, p.telefono, mo.rol, mo.joined_at
+       FROM personas p
+       JOIN miembros_obra mo ON p.id = mo.persona_id
+       WHERE mo.obra_id = $1
+       ORDER BY p.nombre ASC`,
       [obra_id]
     );
     res.json(result.rows);
@@ -29,13 +29,15 @@ export async function registrarObrero(req, res) {
     await client.query("BEGIN");
 
     const obrero = await client.query(
-      `INSERT INTO obreros (nombre, telefono) VALUES ($1, $2) RETURNING *`,
+      `INSERT INTO personas (nombre, telefono) VALUES ($1, $2)
+       ON CONFLICT (telefono) DO UPDATE SET nombre = $1
+       RETURNING *`,
       [nombre, telefono]
     );
 
     if (obra_id) {
       await client.query(
-        `INSERT INTO obreros_obras (obrero_id, obra_id, rol) VALUES ($1, $2, $3)`,
+        `INSERT INTO miembros_obra (persona_id, obra_id, rol) VALUES ($1, $2, $3)`,
         [obrero.rows[0].id, obra_id, rol || null]
       );
     }
@@ -57,7 +59,7 @@ export async function asignarObraObrero(req, res) {
   if (!obrero_id || !obra_id) return res.status(400).json({ error: "obrero_id y obra_id son requeridos" });
   try {
     const result = await pool.query(
-      `INSERT INTO obreros_obras (obrero_id, obra_id, rol)
+      `INSERT INTO miembros_obra (persona_id, obra_id, rol)
        VALUES ($1, $2, $3)
        RETURNING *`,
       [obrero_id, obra_id, rol]
@@ -74,7 +76,7 @@ export async function quitarObreroDeObra(req, res) {
   const { obrero_id, obra_id } = req.params;
   try {
     await pool.query(
-      `DELETE FROM obreros_obras WHERE obrero_id = $1 AND obra_id = $2`,
+      `DELETE FROM miembros_obra WHERE persona_id = $1 AND obra_id = $2`,
       [obrero_id, obra_id]
     );
     res.json({ mensaje: "Obrero quitado de la obra" });
@@ -88,16 +90,15 @@ export async function getUserByPhone(req, res) {
   const { phone } = req.params;
   try {
     const result = await pool.query(
-      `SELECT o.*, oo.obra_id, oo.rol, ob.nombre AS obra_nombre
-       FROM obreros o
-       JOIN obreros_obras oo ON o.id = oo.obrero_id
-       JOIN obras ob ON ob.id = oo.obra_id
-       WHERE o.telefono = $1`,
+      `SELECT p.id, p.nombre, p.telefono, mo.obra_id, mo.rol, ob.nombre AS obra_nombre
+       FROM personas p
+       JOIN miembros_obra mo ON p.id = mo.persona_id
+       JOIN obras ob ON ob.id = mo.obra_id
+       WHERE p.telefono = $1`,
       [phone]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: "Obrero no encontrado" });
 
-    // Si el obrero está en varias obras, devolvemos un array de obras
     const obreroData = {
       id: result.rows[0].id,
       nombre: result.rows[0].nombre,

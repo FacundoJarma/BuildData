@@ -5,9 +5,9 @@ async function buildObra(obra) {
   const team = await pool.query(
     `SELECT p.id,
        UPPER(LEFT(p.nombre, 1) || LEFT(COALESCE(SPLIT_PART(p.nombre, ' ', 2), ''), 1)) AS initials
-     FROM perfiles p
-     JOIN usuarios_obras uo ON uo.usuario_id = p.id
-     WHERE uo.obra_id = $1`,
+     FROM personas p
+     JOIN miembros_obra mo ON mo.persona_id = p.id
+     WHERE mo.obra_id = $1`,
     [obra.id]
   );
 
@@ -52,8 +52,8 @@ export async function getObras(req, res) {
         (SELECT COUNT(*) FROM tareas t WHERE t.obra_id = o.id) AS tareas_total,
         (SELECT COUNT(*) FROM tareas t WHERE t.obra_id = o.id AND t.estado = 'completada') AS tareas_completadas
        FROM obras o
-       JOIN usuarios_obras uo ON uo.obra_id = o.id
-       WHERE uo.usuario_id = $1
+       JOIN miembros_obra mo ON mo.obra_id = o.id
+       JOIN personas p ON p.id = mo.persona_id AND p.auth_user_id = $1
        ORDER BY o.last_activity DESC NULLS LAST`,
       [req.user.id]
     );
@@ -113,7 +113,14 @@ export async function crearObra(req, res) {
 
     // Vincular creador
     await client.query(
-      `INSERT INTO usuarios_obras (usuario_id, obra_id, cargo) VALUES ($1,$2,$3)`,
+      `INSERT INTO personas (auth_user_id) VALUES ($1)
+       ON CONFLICT (auth_user_id) DO NOTHING`,
+      [req.user.id]
+    );
+    await client.query(
+      `INSERT INTO miembros_obra (persona_id, obra_id, rol)
+       SELECT id, $2, $3 FROM personas WHERE auth_user_id = $1
+       ON CONFLICT (persona_id, obra_id) DO NOTHING`,
       [req.user.id, obra_id, myRole]
     );
 
@@ -121,7 +128,14 @@ export async function crearObra(req, res) {
     if (team?.length) {
       for (const userId of team) {
         await client.query(
-          `INSERT INTO usuarios_obras (usuario_id, obra_id, cargo) VALUES ($1,$2,'operario') ON CONFLICT DO NOTHING`,
+          `INSERT INTO personas (auth_user_id) VALUES ($1)
+           ON CONFLICT (auth_user_id) DO NOTHING`,
+          [userId]
+        );
+        await client.query(
+          `INSERT INTO miembros_obra (persona_id, obra_id, rol)
+           SELECT id, $2, 'operario' FROM personas WHERE auth_user_id = $1
+           ON CONFLICT (persona_id, obra_id) DO NOTHING`,
           [userId, obra_id]
         );
       }

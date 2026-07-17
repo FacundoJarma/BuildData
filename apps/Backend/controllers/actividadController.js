@@ -24,7 +24,7 @@ export async function getActividad(req, res) {
         a.entidad_id,
         p.nombre AS usuario_nombre
       FROM actividad a
-      JOIN perfiles p ON p.id = a.usuario_id
+      JOIN personas p ON p.id = a.usuario_id
       WHERE a.obra_id = $1
       ORDER BY a.created_at DESC`,
       [obra_id]
@@ -38,7 +38,11 @@ export async function getActividad(req, res) {
 
 export async function crearActividad(req, res) {
   const { obra_id, tipo, texto } = req.body;
-  const usuario_id = req.user.id;
+  const usuario_id = req.personaId;
+
+  if (!usuario_id) {
+    return res.status(404).json({ error: "Persona no encontrada para el usuario autenticado" });
+  }
 
   if (!obra_id || !tipo) {
     return res.status(400).json({ error: "obra_id y tipo son requeridos" });

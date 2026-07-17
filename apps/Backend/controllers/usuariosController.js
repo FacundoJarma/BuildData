@@ -5,10 +5,10 @@ export async function getEquipo(req, res) {
   const { obra_id } = req.params;
   try {
     const result = await pool.query(
-      `SELECT p.id, p.nombre, p.telefono, uo.cargo, uo.joined_at
-        FROM perfiles p
-        JOIN usuarios_obras uo ON p.id = uo.usuario_id
-        WHERE uo.obra_id = $1`,
+      `SELECT p.id, p.nombre, p.telefono, mo.rol AS cargo, mo.joined_at
+        FROM personas p
+        JOIN miembros_obra mo ON p.id = mo.persona_id
+        WHERE mo.obra_id = $1`,
       [obra_id]
     );
 
@@ -54,9 +54,9 @@ export async function asignarObra(req, res) {
   const { usuario_id, obra_id, cargo } = req.body;
   try {
     const result = await pool.query(
-      `INSERT INTO usuarios_obras (usuario_id, obra_id, cargo)
+      `INSERT INTO miembros_obra (persona_id, obra_id, rol)
        VALUES ($1, $2, $3)
-       ON CONFLICT DO NOTHING
+       ON CONFLICT (persona_id, obra_id) DO NOTHING
        RETURNING *`,
       [usuario_id, obra_id, cargo]
     );

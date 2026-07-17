@@ -19,16 +19,16 @@ export async function register(req, res) {
 
   const userId = data.user.id;
 
-  // 2. Completar el perfil con nombre y teléfono
-  // (el trigger ya creó la fila en perfiles, acá la actualizamos)
+  // 2. Crear/actualizar la persona asociada al auth user
   try {
     await pool.query(
-      `UPDATE perfiles SET nombre = $1, telefono = $2 WHERE id = $3`,
+      `INSERT INTO personas (auth_user_id, nombre, telefono)
+       VALUES ($3, $1, $2)
+       ON CONFLICT (auth_user_id) DO UPDATE SET nombre = $1, telefono = $2`,
       [nombre, telefono, userId]
     );
   } catch (dbError) {
-    console.error("Error actualizando perfil:", dbError);
-    // No bloqueamos el registro si esto falla — el usuario ya fue creado
+    console.error("Error creando/actualizando persona:", dbError);
   }
 
   res.status(201).json({
@@ -96,11 +96,11 @@ export async function logout(req, res) {
 export async function getMe(req, res) {
   const userId = req.user.id;
   try {
-    const perfil = await pool.query(
-      `SELECT * FROM perfiles WHERE id = $1`,
+    const persona = await pool.query(
+      `SELECT * FROM personas WHERE auth_user_id = $1`,
       [userId]
     );
-    res.json(perfil.rows);
+    res.json(persona.rows);
   } catch (error) {
     console.error(error);  // acá vas a ver el error real en la terminal
     res.status(500).json({ error: error.message });  // cambiá esto temporalmente
