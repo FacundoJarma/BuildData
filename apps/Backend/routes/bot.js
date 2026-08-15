@@ -2,7 +2,7 @@ import { Router } from "express";
 import { botAuthMiddleware } from "../middleware/botAuthMiddleware.js";
 import {
   recibirMensaje,
-  crearSubtareaDesdeBot,
+  crearTareaDesdeBot,
   crearPedidoDeCompra,
   registrarRetraso,
   actualizarStock,
@@ -18,7 +18,7 @@ router.use(botAuthMiddleware);
 router.post("/mensaje", recibirMensaje);
 
 // Endpoints específicos que Facu llama según lo que detectó en el mensaje
-router.post("/subtarea", crearSubtareaDesdeBot);
+router.post("/tareas", crearTareaDesdeBot);
 router.post("/pedidoDeCompra", crearPedidoDeCompra);
 router.post("/retraso", registrarRetraso);
 router.post("/stock", actualizarStock);

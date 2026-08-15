@@ -39,9 +39,8 @@ export async function handleFreeText(phone: string, message: Message): Promise<v
       return;
     }
 
-    const chat = await message.getChat();
     await message.reply("Ok! " + (parsed.comment || "Estoy procesando tu solicitud..."));
-    await sendObraPoll(phone, chat, { type: "operation", operation: parsed });
+    await sendObraPoll(phone, message.from, { type: "operation", operation: parsed });
 
   } catch (error) {
     console.error("Error al procesar texto:", error);

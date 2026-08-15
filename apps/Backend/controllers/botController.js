@@ -1,5 +1,5 @@
 import { pool } from "../db.js";
-import { resolvePersonaIdByTelefono } from "../services/personaService.js";
+import { resolvePersonaIdByTelefono, resolvePersonaIdByNombre } from "../services/personaService.js";
 
 // ============================================================
 // CONTRATO DE API CON FACU (bot de WhatsApp)
@@ -33,42 +33,33 @@ export async function recibirMensaje(req, res) {
 }
 
 
-// POST /bot/subtarea
-// Facu detectó que el mensaje describe trabajo realizado → crea subtarea automáticamente.
-// El admin después la arrastra dentro de una tarea en el cronograma.
-export async function crearSubtareaDesdeBot(req, res) {
-  const { obra_id, telefono, mensaje_id, titulo, descripcion } = req.body;
+// POST /bot/tareas
+// Facu detectó que el mensaje describe una tarea a crear → crea la tarea directamente.
+export async function crearTareaDesdeBot(req, res) {
+  const { obra_id, telefono, titulo, descripcion, asignado_a, prioridad, fecha_inicio, fecha_limite, costo_estimado } = req.body;
   if (!telefono) return res.status(400).json({ error: "telefono es requerido" });
+  if (!titulo) return res.status(400).json({ error: "titulo es requerido" });
 
-  const usuario_id = await resolvePersonaIdByTelefono(telefono);
-  if (!usuario_id) return res.status(404).json({ error: "Persona no encontrada para el teléfono proporcionado" });
-  //
-  // No se requiere tarea_id porque la subtarea puede quedar "suelta"
-  // hasta que el admin la asigne a una tarea en el Gantt.
-  // tarea_id es NULL hasta ese momento.
-  //
+  const creada_por = await resolvePersonaIdByTelefono(telefono);
+  if (!creada_por) return res.status(404).json({ error: "Persona no encontrada para el teléfono proporcionado" });
+
+  let asignado_a_id = null;
+  if (asignado_a) {
+    asignado_a_id = await resolvePersonaIdByNombre(asignado_a);
+    if (!asignado_a_id) return res.status(404).json({ error: `Persona "${asignado_a}" no encontrada` });
+  }
+
   try {
-    const subtarea = await pool.query(
-      `INSERT INTO subtareas (tarea_id, usuario_id, titulo, descripcion, created_by)
-       VALUES (NULL, $1, $2, $3, $1)
+    const result = await pool.query(
+      `INSERT INTO tareas (obra_id, titulo, descripcion, creada_por, asignado_a, prioridad, fecha_inicio, fecha_limite, costo_estimado)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
-      [usuario_id, titulo, descripcion]
+      [obra_id, titulo, descripcion, creada_por, asignado_a_id, prioridad, fecha_inicio, fecha_limite, costo_estimado]
     );
-
-    // Marcar el mensaje como procesado
-    await pool.query(
-      `UPDATE mensajes SET estado_procesamiento = 'procesado' WHERE id = $1`,
-      [mensaje_id]
-    );
-
-    res.status(201).json(subtarea.rows[0]);
+    res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error(error);
-    await pool.query(
-      `UPDATE mensajes SET estado_procesamiento = 'error', error_detalle = $1 WHERE id = $2`,
-      [error.message, req.body.mensaje_id]
-    );
-    res.status(500).json({ error: "Error creando subtarea desde bot" });
+    res.status(500).json({ error: "Error creando tarea desde bot" });
   }
 }
 

@@ -26,12 +26,11 @@ export async function handleImage(
   }
 
   const result = await analyzeDocument(media.data, media.mimetype);
-  const chat = await message.getChat();
 
   switch (result.type) {
     case "comprobante":
       await message.reply(formatComprobante(result.data as ComprobanteData));
-      await sendObraPoll(phone, chat, {
+      await sendObraPoll(phone, message.from, {
         type: "comprobante",
         data: result.data as ComprobanteData,
       });
@@ -39,7 +38,7 @@ export async function handleImage(
 
     case "factura":
       await message.reply(formatFactura(result.data as FacturaData));
-      await sendObraPoll(phone, chat, {
+      await sendObraPoll(phone, message.from, {
         type: "factura",
         data: result.data as FacturaData,
       });
