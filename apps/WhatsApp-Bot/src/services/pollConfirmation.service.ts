@@ -1,4 +1,4 @@
-import { Message, Poll } from "whatsapp-web.js";
+import { Chat, Message, Poll } from "whatsapp-web.js";
 import { getClient } from "../client";
 import { getUserObras } from "./user.service";
 import {
@@ -129,4 +129,67 @@ export async function handlePollVote(
       }
     } catch {}
   }
+}
+
+export async function sendObraConfirmationText(
+  phone: string,
+  chat: Chat,
+  pendingQuery: PendingQuery,
+): Promise<void> {
+  const user = await getUserObras(phone);
+  if (!user || user.obras.length === 0) {
+    await chat.sendMessage(MSG.ERROR_NO_OBRA);
+    return;
+  }
+
+  setPending(phone, pendingQuery);
+
+  const lista = user.obras
+    .map((o, i) => `*${i + 1}.* ${o.obra_nombre}`)
+    .join("\n");
+
+  await chat.sendMessage(
+    `¿En qué obra?\n\n${lista}\n\n*0.* ❌ Cancelar\n\nRespondé con el número.`,
+  );
+}
+
+export async function handleObraTextReply(
+  phone: string,
+  selectedIndexRaw: string,
+  chat: Chat,
+): Promise<boolean> {
+  const pending = getPending(phone);
+  if (!pending) return false;
+
+  const selectedIndex = parseInt(selectedIndexRaw.trim(), 10);
+  if (isNaN(selectedIndex)) return false;
+
+  if (selectedIndex === 0) {
+    clearPending(phone);
+    await chat.sendMessage(MSG.SUCCESS_DATA_CANCELLED);
+    return true;
+  }
+
+  const user = await getUserObras(phone);
+  if (!user) {
+    clearPending(phone);
+    await chat.sendMessage(MSG.ERROR_NO_OBRA);
+    return true;
+  }
+
+  const obra = user.obras[selectedIndex - 1];
+  if (!obra) {
+    await chat.sendMessage("❌ No encontré esa opción. Intenta de nuevo.");
+    return true;
+  }
+
+  pending.obra_id = obra.obra_id;
+  clearPending(phone);
+  try {
+    await executePending(pending, obra.obra_nombre);
+    await chat.sendMessage(MSG.SUCCESS_DATA_SAVED);
+  } catch (error) {
+    await chat.sendMessage("❌ Ocurrió un error al ejecutar la operación. Intentá de nuevo.");
+  }
+  return true;
 }
