@@ -66,8 +66,7 @@ async function handleTextMessage(
   console.log(`Mensaje de ${phone}: ${message.body}`);
 
   if (hasPending(phone) && /^\d+$/.test(message.body.trim())) {
-    const chat = await message.getChat();
-    const handled = await handleObraTextReply(phone, message.body, chat);
+    const handled = await handleObraTextReply(phone, message.body, message.from);
     if (handled) return;
   }
 

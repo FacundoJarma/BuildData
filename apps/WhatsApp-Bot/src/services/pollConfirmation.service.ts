@@ -1,4 +1,4 @@
-import { Chat, Message, Poll } from "whatsapp-web.js";
+import { Message, Poll } from "whatsapp-web.js";
 import { getClient } from "../client";
 import { getUserObras } from "./user.service";
 import {
@@ -133,12 +133,13 @@ export async function handlePollVote(
 
 export async function sendObraConfirmationText(
   phone: string,
-  chat: Chat,
+  chatId: string,
   pendingQuery: PendingQuery,
 ): Promise<void> {
   const user = await getUserObras(phone);
+  const client = getClient();
   if (!user || user.obras.length === 0) {
-    await chat.sendMessage(MSG.ERROR_NO_OBRA);
+    await client.sendMessage(chatId, MSG.ERROR_NO_OBRA);
     return;
   }
 
@@ -148,7 +149,8 @@ export async function sendObraConfirmationText(
     .map((o, i) => `*${i + 1}.* ${o.obra_nombre}`)
     .join("\n");
 
-  await chat.sendMessage(
+  await client.sendMessage(
+    chatId,
     `¿En qué obra?\n\n${lista}\n\n*0.* ❌ Cancelar\n\nRespondé con el número.`,
   );
 }
@@ -156,7 +158,7 @@ export async function sendObraConfirmationText(
 export async function handleObraTextReply(
   phone: string,
   selectedIndexRaw: string,
-  chat: Chat,
+  chatId: string,
 ): Promise<boolean> {
   const pending = getPending(phone);
   if (!pending) return false;
@@ -164,22 +166,24 @@ export async function handleObraTextReply(
   const selectedIndex = parseInt(selectedIndexRaw.trim(), 10);
   if (isNaN(selectedIndex)) return false;
 
+  const client = getClient();
+
   if (selectedIndex === 0) {
     clearPending(phone);
-    await chat.sendMessage(MSG.SUCCESS_DATA_CANCELLED);
+    await client.sendMessage(chatId, MSG.SUCCESS_DATA_CANCELLED);
     return true;
   }
 
   const user = await getUserObras(phone);
   if (!user) {
     clearPending(phone);
-    await chat.sendMessage(MSG.ERROR_NO_OBRA);
+    await client.sendMessage(chatId, MSG.ERROR_NO_OBRA);
     return true;
   }
 
   const obra = user.obras[selectedIndex - 1];
   if (!obra) {
-    await chat.sendMessage("❌ No encontré esa opción. Intenta de nuevo.");
+    await client.sendMessage(chatId, "❌ No encontré esa opción. Intenta de nuevo.");
     return true;
   }
 
@@ -187,9 +191,9 @@ export async function handleObraTextReply(
   clearPending(phone);
   try {
     await executePending(pending, obra.obra_nombre);
-    await chat.sendMessage(MSG.SUCCESS_DATA_SAVED);
+    await client.sendMessage(chatId, MSG.SUCCESS_DATA_SAVED);
   } catch (error) {
-    await chat.sendMessage("❌ Ocurrió un error al ejecutar la operación. Intentá de nuevo.");
+    await client.sendMessage(chatId, "❌ Ocurrió un error al ejecutar la operación. Intentá de nuevo.");
   }
   return true;
 }

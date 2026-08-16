@@ -30,7 +30,7 @@ export async function handleImage(
   switch (result.type) {
     case "comprobante":
       await message.reply(formatComprobante(result.data as ComprobanteData));
-      await sendObraConfirmationText(phone, await message.getChat(), {
+      await sendObraConfirmationText(phone, message.from, {
         type: "comprobante",
         data: result.data as ComprobanteData,
       });
@@ -38,7 +38,7 @@ export async function handleImage(
 
     case "factura":
       await message.reply(formatFactura(result.data as FacturaData));
-      await sendObraConfirmationText(phone, await message.getChat(), {
+      await sendObraConfirmationText(phone, message.from, {
         type: "factura",
         data: result.data as FacturaData,
       });

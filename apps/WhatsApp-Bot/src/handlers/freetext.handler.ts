@@ -40,7 +40,7 @@ export async function handleFreeText(phone: string, message: Message): Promise<v
     }
 
     await message.reply("Ok! " + (parsed.comment || "Estoy procesando tu solicitud..."));
-    await sendObraConfirmationText(phone, await message.getChat(), { type: "operation", operation: parsed });
+    await sendObraConfirmationText(phone, message.from, { type: "operation", operation: parsed });
 
   } catch (error) {
     console.error("Error al procesar texto:", error);
