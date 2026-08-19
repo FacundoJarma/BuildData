@@ -1,4 +1,5 @@
 import { pool } from "../db.js";
+import { resolvePersonaIdByTelefono } from "../services/personaService.js";
 
 // ============================================================
 // CONTRATO DE API CON FACU (bot de WhatsApp)
@@ -11,8 +12,12 @@ import { pool } from "../db.js";
 // Facu manda el mensaje crudo. Nosotros lo guardamos con estado 'pendiente'.
 // Facu después lo procesa y llama a los endpoints específicos según el tipo.
 export async function recibirMensaje(req, res) {
-  const { obra_id, usuario_id, tipo, contenido } = req.body;
-  // tipo puede ser: 'texto', 'audio', 'foto'
+  const { obra_id, telefono, tipo, contenido } = req.body;
+  if (!telefono) return res.status(400).json({ error: "telefono es requerido" });
+
+  const usuario_id = await resolvePersonaIdByTelefono(telefono);
+  if (!usuario_id) return res.status(404).json({ error: "Persona no encontrada para el teléfono proporcionado" });
+
   try {
     const result = await pool.query(
       `INSERT INTO mensajes (obra_id, usuario_id, tipo, contenido, estado_procesamiento)
@@ -48,9 +53,13 @@ export async function recibirMensaje(req, res) {
 // Facu detectó que se pidió material → crea el pedido. Si la obra tiene aprobacion_automatica
 // activada, el pedido queda aprobado y listo para comprar; si no (default), queda pendiente
 // para que el admin lo apruebe desde el panel (PATCH /pedidos/:id/aprobar|rechazar).
-// Body esperado: { obra_id, proveedor_id, usuario_id, mensaje_id, items: [{material_id, cantidad, precio_unitario}] }
+// Body esperado: { obra_id, proveedor_id, telefono, mensaje_id, items: [{material_id, cantidad, precio_unitario}] }
 export async function crearPedidoDeCompra(req, res) {
-  const { obra_id, proveedor_id, usuario_id, mensaje_id, items } = req.body;
+  const { obra_id, proveedor_id, telefono, mensaje_id, items } = req.body;
+  if (!telefono) return res.status(400).json({ error: "telefono es requerido" });
+
+  const usuario_id = await resolvePersonaIdByTelefono(telefono);
+  if (!usuario_id) return res.status(404).json({ error: "Persona no encontrada para el teléfono proporcionado" });
 
   const client = await pool.connect();
   try {
@@ -112,11 +121,15 @@ export async function crearPedidoDeCompra(req, res) {
 
 // POST /bot/retraso
 // Facu detectó que algo se atrasó → actualiza el rubro (ítem programable) y desplaza la fecha límite.
-// Body esperado: { tarea_id, dias_retraso, mensaje_id, obra_id, usuario_id }
+// Body esperado: { tarea_id, dias_retraso, mensaje_id, obra_id, telefono }
 // (el campo se sigue llamando tarea_id por compatibilidad con el contrato existente,
 // pero desde la reestructuración tareas/rubros identifica un rubro, no un reporte granular)
 export async function registrarRetraso(req, res) {
-  const { tarea_id, dias_retraso, mensaje_id, obra_id, usuario_id } = req.body;
+  const { tarea_id, dias_retraso, mensaje_id, obra_id, telefono } = req.body;
+  if (!telefono) return res.status(400).json({ error: "telefono es requerido" });
+
+  const usuario_id = await resolvePersonaIdByTelefono(telefono);
+  if (!usuario_id) return res.status(404).json({ error: "Persona no encontrada para el teléfono proporcionado" });
 
   try {
 
@@ -170,9 +183,13 @@ export async function registrarRetraso(req, res) {
 
 // POST /bot/stock
 // Facu detectó uso de materiales → descuenta del stock y registra movimiento.
-// Body esperado: { obra_id, usuario_id, mensaje_id, movimientos: [{material_id, cantidad, rubro_id}] }
+// Body esperado: { obra_id, telefono, mensaje_id, movimientos: [{material_id, cantidad, rubro_id}] }
 export async function actualizarStock(req, res) {
-  const { obra_id, usuario_id, mensaje_id, movimientos } = req.body;
+  const { obra_id, telefono, mensaje_id, movimientos } = req.body;
+  if (!telefono) return res.status(400).json({ error: "telefono es requerido" });
+
+  const usuario_id = await resolvePersonaIdByTelefono(telefono);
+  if (!usuario_id) return res.status(404).json({ error: "Persona no encontrada para el teléfono proporcionado" });
 
   const client = await pool.connect();
   try {

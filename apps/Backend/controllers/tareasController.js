@@ -1,5 +1,5 @@
 import { pool } from "../db.js";
-import { resolvePersonaIdByTelefono } from "./obrerosController.js";
+import { resolvePersonaIdByTelefono } from "../services/personaService.js";
 
 // GET /tareas/:obra_id — reportes granulares de una obra
 export async function getTareas(req, res) {

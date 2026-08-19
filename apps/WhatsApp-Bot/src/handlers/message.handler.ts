@@ -10,6 +10,7 @@ import { handleImage } from "./image.handler";
 import { MSG } from "../shared/responses";
 import { getUserObras } from "../services/user.service";
 import { buildingsCommand } from "../commands/buildings.command";
+import { handleObraTextReply } from "../services/pollConfirmation.service";
 
 registerCommand(ayudaCommand);
 registerCommand(cancelCommand);
@@ -63,6 +64,11 @@ async function handleTextMessage(
   message: Message,
 ): Promise<void> {
   console.log(`Mensaje de ${phone}: ${message.body}`);
+
+  if (hasPending(phone) && /^\d+$/.test(message.body.trim())) {
+    const handled = await handleObraTextReply(phone, message.body, message.from);
+    if (handled) return;
+  }
 
   if (message.body.startsWith(PREFIX)) {
     const [commandName, ...args] = message.body.split(" ");

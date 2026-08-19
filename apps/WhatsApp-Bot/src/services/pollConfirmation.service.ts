@@ -1,4 +1,5 @@
-import { Chat, Message, Poll } from "whatsapp-web.js";
+import { Message, Poll } from "whatsapp-web.js";
+import { getClient } from "../client";
 import { getUserObras } from "./user.service";
 import {
   setPending,
@@ -73,12 +74,13 @@ async function executePending(pending: PendingQuery, obraNombre: string, phone: 
 
 export async function sendObraPoll(
   phone: string,
-  chat: Chat,
+  chatId: string,
   pendingQuery: PendingQuery,
 ): Promise<void> {
   const user = await getUserObras(phone);
+  const client = getClient();
   if (!user || user.obras.length === 0) {
-    await chat.sendMessage(MSG.ERROR_NO_OBRA);
+    await client.sendMessage(chatId, MSG.ERROR_NO_OBRA);
     return;
   }
 
@@ -87,7 +89,7 @@ export async function sendObraPoll(
     pendingQuery.obra_id = obra.obra_id;
     executePending(pendingQuery, obra.obra_nombre);
     clearPending(phone);
-    await chat.sendMessage(
+    await client.sendMessage(chatId,
       `✅ Confirmado automáticamente para la obra *${obra.obra_nombre}*.`,
     );
     return;
@@ -102,7 +104,7 @@ export async function sendObraPoll(
     allowMultipleAnswers: false,
     messageSecret: undefined,
   });
-  await chat.sendMessage(poll);
+  await client.sendMessage(chatId, poll);
 }
 
 export async function handlePollVote(
@@ -110,47 +112,121 @@ export async function handlePollVote(
   selectedOptionName: string,
   pollMessage: Message,
 ): Promise<void> {
-  const pending = getPending(voterPhone);
+  try {
+    console.log(`[handlePollVote] Voto de ${voterPhone}: "${selectedOptionName}"`);
+    const pending = getPending(voterPhone);
+    const client = getClient();
 
-  if (!pending) {
-    await pollMessage.delete(true);
-    return;
-  }
+    if (!pending) {
+      console.log(`[handlePollVote] Sin pendiente para ${voterPhone}, borrando poll`);
+      await pollMessage.delete(true);
+      return;
+    }
 
-  if (selectedOptionName === "❌ Cancelar") {
+    const chatId = pollMessage.id.remote;
+    console.log(`[handlePollVote] chatId: ${chatId}`);
+
+    if (selectedOptionName === "❌ Cancelar") {
+      clearPending(voterPhone);
+      await pollMessage.delete(true);
+      await client.sendMessage(chatId, MSG.SUCCESS_DATA_CANCELLED);
+      return;
+    }
+
+    const user = await getUserObras(voterPhone);
+    if (!user) {
+      clearPending(voterPhone);
+      await pollMessage.delete(true);
+      await client.sendMessage(chatId, MSG.ERROR_NO_OBRA);
+      return;
+    }
+
+    const obra = user.obras.find((o) => o.obra_nombre === selectedOptionName);
+    if (!obra) {
+      await client.sendMessage(chatId, "❌ No encontré esa obra. Intenta de nuevo.");
+      return;
+    }
+
+    pending.obra_id = obra.obra_id;
     clearPending(voterPhone);
+    await executePending(pending, obra.obra_nombre, voterPhone);
     await pollMessage.delete(true);
-    const chat = await pollMessage.getChat();
-    await chat.sendMessage(MSG.SUCCESS_DATA_CANCELLED);
+    await client.sendMessage(chatId, MSG.SUCCESS_DATA_SAVED);
+  } catch (error) {
+    console.error("[handlePollVote] Error:", error);
+    try {
+      const client = getClient();
+      const chatId = pollMessage.id?.remote;
+      if (chatId) {
+        await client.sendMessage(chatId, "❌ Ocurrió un error al ejecutar la operación. Intentá de nuevo.");
+      }
+    } catch {}
+  }
+}
+
+export async function sendObraConfirmationText(
+  phone: string,
+  chatId: string,
+  pendingQuery: PendingQuery,
+): Promise<void> {
+  const user = await getUserObras(phone);
+  const client = getClient();
+  if (!user || user.obras.length === 0) {
+    await client.sendMessage(chatId, MSG.ERROR_NO_OBRA);
     return;
   }
 
-  const user = await getUserObras(voterPhone);
+  setPending(phone, pendingQuery);
+
+  const lista = user.obras
+    .map((o, i) => `*${i + 1}.* ${o.obra_nombre}`)
+    .join("\n");
+
+  await client.sendMessage(
+    chatId,
+    `¿En qué obra?\n\n${lista}\n\n*0.* ❌ Cancelar\n\nRespondé con el número.`,
+  );
+}
+
+export async function handleObraTextReply(
+  phone: string,
+  selectedIndexRaw: string,
+  chatId: string,
+): Promise<boolean> {
+  const pending = getPending(phone);
+  if (!pending) return false;
+
+  const selectedIndex = parseInt(selectedIndexRaw.trim(), 10);
+  if (isNaN(selectedIndex)) return false;
+
+  const client = getClient();
+
+  if (selectedIndex === 0) {
+    clearPending(phone);
+    await client.sendMessage(chatId, MSG.SUCCESS_DATA_CANCELLED);
+    return true;
+  }
+
+  const user = await getUserObras(phone);
   if (!user) {
-    clearPending(voterPhone);
-    await pollMessage.delete(true);
-    const chat = await pollMessage.getChat();
-    await chat.sendMessage(MSG.ERROR_NO_OBRA);
-    return;
+    clearPending(phone);
+    await client.sendMessage(chatId, MSG.ERROR_NO_OBRA);
+    return true;
   }
 
-  const obra = user.obras.find((o) => o.obra_nombre === selectedOptionName);
+  const obra = user.obras[selectedIndex - 1];
   if (!obra) {
-    const chat = await pollMessage.getChat();
-    await chat.sendMessage("❌ No encontré esa obra. Intenta de nuevo.");
-    return;
+    await client.sendMessage(chatId, "❌ No encontré esa opción. Intenta de nuevo.");
+    return true;
   }
 
   pending.obra_id = obra.obra_id;
-  clearPending(voterPhone);
+  clearPending(phone);
   try {
-    await executePending(pending, obra.obra_nombre, voterPhone);
-    await pollMessage.delete(true);
-    const chat = await pollMessage.getChat();
-    await chat.sendMessage(MSG.SUCCESS_DATA_SAVED);
+    await executePending(pending, obra.obra_nombre, phone);
+    await client.sendMessage(chatId, MSG.SUCCESS_DATA_SAVED);
   } catch (error) {
-    await pollMessage.delete(true);
-    const chat = await pollMessage.getChat();
-    await chat.sendMessage("❌ Ocurrió un error al ejecutar la operación. Intentá de nuevo.");
+    await client.sendMessage(chatId, "❌ Ocurrió un error al ejecutar la operación. Intentá de nuevo.");
   }
+  return true;
 }

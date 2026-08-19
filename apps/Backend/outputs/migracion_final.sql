@@ -181,3 +181,37 @@ CREATE INDEX IF NOT EXISTS idx_gastos_obra_fecha ON gastos(obra_id, fecha);
 -- POST /bot/pedidoDeCompra y PATCH /pedidos/:id/aprobar|rechazar).
 ALTER TABLE obras ADD COLUMN IF NOT EXISTS aprobacion_automatica BOOLEAN NOT NULL DEFAULT false;
 
+-- 18. Re-aplicar la reestructuración tareas/rubros del ítem 12: un merge con una rama
+-- paralela había revertido el schema en la base compartida (estado/prioridad/fechas/asignado
+-- de vuelta en tareas, tareas.usuario_id perdido) sin que el código se enterara. Los valores que
+-- había en esas columnas al momento de revertir eran todos default (ninguna fila real tenía datos
+-- propios), así que no se perdió información al volver a mover todo a rubros. De paso, se sacaron
+-- dos FKs rotas que la otra rama había dejado apuntando a miembros_obra en vez de personas, y un
+-- trigger (trg_tareas_updated_at) que dependía de tareas.updated_at.
+ALTER TABLE rubros
+  ADD COLUMN IF NOT EXISTS estado VARCHAR(30) DEFAULT 'pendiente',
+  ADD COLUMN IF NOT EXISTS prioridad VARCHAR(20),
+  ADD COLUMN IF NOT EXISTS fecha_inicio DATE,
+  ADD COLUMN IF NOT EXISTS fecha_limite DATE,
+  ADD COLUMN IF NOT EXISTS asignado_a UUID REFERENCES personas(id),
+  ADD COLUMN IF NOT EXISTS creada_por UUID REFERENCES personas(id),
+  ADD COLUMN IF NOT EXISTS completada_por UUID REFERENCES personas(id),
+  ADD COLUMN IF NOT EXISTS fecha_completada TIMESTAMP;
+
+DROP TRIGGER IF EXISTS trg_tareas_updated_at ON tareas;
+ALTER TABLE tareas DROP CONSTRAINT IF EXISTS fk_tareas_created_by;
+ALTER TABLE tareas DROP CONSTRAINT IF EXISTS tareas_asignado_a_fkey;
+ALTER TABLE tareas DROP CONSTRAINT IF EXISTS tareas_completada_por_fkey;
+ALTER TABLE tareas DROP COLUMN IF EXISTS estado;
+ALTER TABLE tareas DROP COLUMN IF EXISTS prioridad;
+ALTER TABLE tareas DROP COLUMN IF EXISTS asignado_a;
+ALTER TABLE tareas DROP COLUMN IF EXISTS completada_por;
+ALTER TABLE tareas DROP COLUMN IF EXISTS fecha_completada;
+ALTER TABLE tareas DROP COLUMN IF EXISTS fecha_limite;
+ALTER TABLE tareas DROP COLUMN IF EXISTS fecha_inicio;
+ALTER TABLE tareas DROP COLUMN IF EXISTS updated_at;
+ALTER TABLE tareas DROP COLUMN IF EXISTS porcentaje_avance;
+
+ALTER TABLE tareas ADD COLUMN IF NOT EXISTS usuario_id UUID REFERENCES personas(id);
+UPDATE tareas SET usuario_id = created_by WHERE usuario_id IS NULL;
+

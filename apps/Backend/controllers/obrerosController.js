@@ -86,14 +86,6 @@ export async function quitarObreroDeObra(req, res) {
   }
 }
 
-// Resuelve un teléfono a la UUID del obrero (personas.id).
-// Usado internamente por otros endpoints /bot/* que reciben "creada_por_telefono"
-// en vez de una UUID ya resuelta.
-export async function resolvePersonaIdByTelefono(telefono) {
-  const result = await pool.query(`SELECT id FROM personas WHERE telefono = $1`, [telefono]);
-  return result.rows[0]?.id || null;
-}
-
 export async function getUserByPhone(req, res) {
   const { phone } = req.params;
   try {

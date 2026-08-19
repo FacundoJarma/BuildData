@@ -1,5 +1,5 @@
 import { pool } from "../db.js";
-import { resolvePersonaIdByTelefono } from "./obrerosController.js";
+import { resolvePersonaIdByTelefono } from "../services/personaService.js";
 
 // vision.service.ts entrega fecha en formato DD/MM/YYYY (o "" si no la detectó) — la convertimos
 // a YYYY-MM-DD para las columnas DATE. Devuelve null si no matchea (columna queda sin valor).

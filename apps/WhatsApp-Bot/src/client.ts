@@ -8,11 +8,17 @@ import { handlePollVote } from "./services/pollConfirmation.service";
 const mongoUri = process.env.MONGO_URI!;
 const isProduction = process.env.NODE_ENV === "production";
 
+let client: Client;
+
+export function getClient(): Client {
+  return client;
+}
+
 export async function initClient() {
   await mongoose.connect(mongoUri);
   console.log("✅ Conectado a MongoDB");
 
-  const client = new Client({
+  client = new Client({
     authStrategy: new RemoteAuth({
       clientId: "whatsapp-bot-final",
       store: mongoStore,
@@ -36,18 +42,29 @@ export async function initClient() {
     console.log("💾 Sesión guardada en MongoDB");
   });
 
-  client.on("ready", () => {
+  client.on("ready", async () => {
     console.log("✅ Bot conectado y listo");
   });
 
   client.on("auth_failure", () => {
     console.error("❌ Error de autenticación");
   });
+
+  client.on("disconnected", (reason) => {
+    console.error("❌ Cliente desconectado:", reason);
+  });
+
   client.on("message", (message) => {
     handleMessage(message);
   });
 
   client.on("vote_update", (vote) => {
+    console.log("[vote_update] Evento recibido:", JSON.stringify({
+      voter: vote.voter,
+      selectedOptions: vote.selectedOptions?.map(o => o.name),
+      hasParentMessage: !!vote.parentMessage,
+      parentId: vote.parentMessage?.id?.id,
+    }));
     const voterPhone = vote.voter.split("@")[0];
     const selected = vote.selectedOptions[0]?.name;
     if (!selected) return;

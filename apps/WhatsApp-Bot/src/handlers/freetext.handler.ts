@@ -2,7 +2,7 @@ import { Message } from "whatsapp-web.js";
 import { textToOperation } from "../services/llm.service";
 import { clearPending, hasPending, ApiCall } from "./pendingQuery.store";
 import { validateApiCall } from "../services/endpointSchema";
-import { sendObraPoll } from "../services/pollConfirmation.service";
+import { sendObraConfirmationText } from "../services/pollConfirmation.service";
 import { MSG, MSG_LLM_ERROR } from "../shared/responses";
 
 export async function handleFreeText(phone: string, message: Message): Promise<void> {
@@ -39,9 +39,8 @@ export async function handleFreeText(phone: string, message: Message): Promise<v
       return;
     }
 
-    const chat = await message.getChat();
     await message.reply("Ok! " + (parsed.comment || "Estoy procesando tu solicitud..."));
-    await sendObraPoll(phone, chat, { type: "operation", operation: parsed });
+    await sendObraConfirmationText(phone, message.from, { type: "operation", operation: parsed });
 
   } catch (error) {
     console.error("Error al procesar texto:", error);

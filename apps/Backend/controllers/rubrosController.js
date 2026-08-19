@@ -1,5 +1,5 @@
 import { pool } from "../db.js";
-import { resolvePersonaIdByTelefono } from "./obrerosController.js";
+import { resolvePersonaIdByTelefono } from "../services/personaService.js";
 
 function formatRubro(row) {
   return {
