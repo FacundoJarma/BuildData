@@ -9,7 +9,14 @@ import {
 import { callEndpoint } from "./api.service";
 import { MSG } from "../shared/responses";
 
-async function executePending(pending: PendingQuery, obraNombre: string): Promise<void> {
+// Los montos de vision.service.ts llegan en formato argentino ("$1.234,56") — hay que
+// convertirlos a number antes de mandarlos a /bot/gastos, que espera monto: number.
+function parseMontoArg(raw: string): number {
+  const normalized = raw.replace(/[^0-9,.-]/g, "").replace(/\./g, "").replace(",", ".");
+  return parseFloat(normalized) || 0;
+}
+
+async function executePending(pending: PendingQuery, obraNombre: string, phone: string): Promise<void> {
   const tag = `obra "${obraNombre}"`;
   switch (pending.type) {
     case "operation": {
@@ -29,12 +36,38 @@ async function executePending(pending: PendingQuery, obraNombre: string): Promis
       }
       break;
     }
-    case "comprobante":
-      console.log(`Comprobante confirmado para ${tag}: ${JSON.stringify(pending.data)}`);
+    case "comprobante": {
+      const d = pending.data;
+      const payload = {
+        obra_id: pending.obra_id,
+        telefono: phone,
+        monto: parseMontoArg(d.monto),
+        moneda: d.moneda || "ARS",
+        descripcion: `${d.entidad} - ${d.tipo}`,
+        origen: "bot_imagen",
+        comprobante_detalle: d,
+      };
+      console.log(`[executePending] → POST /bot/gastos (comprobante) para ${tag}`);
+      const result = await callEndpoint("POST", "/bot/gastos", payload);
+      console.log(`[executePending] respuesta: ${JSON.stringify(result)}`);
       break;
-    case "factura":
-      console.log(`Factura confirmada para ${tag}: ${JSON.stringify(pending.data)}`);
+    }
+    case "factura": {
+      const d = pending.data;
+      const payload = {
+        obra_id: pending.obra_id,
+        telefono: phone,
+        monto: parseMontoArg(d.total),
+        moneda: "ARS",
+        descripcion: `Factura ${d.tipoFactura} ${d.numero} de ${d.emisor}`,
+        origen: "bot_imagen",
+        comprobante_detalle: d,
+      };
+      console.log(`[executePending] → POST /bot/gastos (factura) para ${tag}`);
+      const result = await callEndpoint("POST", "/bot/gastos", payload);
+      console.log(`[executePending] respuesta: ${JSON.stringify(result)}`);
       break;
+    }
   }
 }
 
@@ -111,7 +144,7 @@ export async function handlePollVote(
   pending.obra_id = obra.obra_id;
   clearPending(voterPhone);
   try {
-    await executePending(pending, obra.obra_nombre);
+    await executePending(pending, obra.obra_nombre, voterPhone);
     await pollMessage.delete(true);
     const chat = await pollMessage.getChat();
     await chat.sendMessage(MSG.SUCCESS_DATA_SAVED);

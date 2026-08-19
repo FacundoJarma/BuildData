@@ -140,7 +140,7 @@ export function QuickAddModal({ kind, obraId, onClose, onDone }: Props) {
     if (!canSave || submitting) return;
     setSubmitting(true);
     try {
-      if (kind === "tarea") await createTask(obraId, data);
+      if (kind === "tarea") await createTask(obraId, { ...data, rubro_id: lookup.rubroMap[data.rubro] || "" });
       else if (kind === "critico") await createAlert(obraId, data);
       else if (kind === "reporte") await createActividad(obraId, data);
       else if (kind === "persona") {

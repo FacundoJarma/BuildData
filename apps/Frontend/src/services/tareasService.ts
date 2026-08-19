@@ -9,9 +9,7 @@ export async function createTask(obraId: string, data: Record<string, string>) {
     obra_id: obraId,
     titulo: data.nombre,
     descripcion: data.desc || "",
-    asignado_a: data.who || null,
-    prioridad: "media",
-    estado: "pendiente",
+    rubro_id: data.rubro_id || null,
   };
 
   const res = await fetch(`${API_URL}/tareas`, {

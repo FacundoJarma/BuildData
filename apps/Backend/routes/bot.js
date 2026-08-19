@@ -2,12 +2,14 @@ import { Router } from "express";
 import { botAuthMiddleware } from "../middleware/botAuthMiddleware.js";
 import {
   recibirMensaje,
-  crearSubtareaDesdeBot,
   crearPedidoDeCompra,
   registrarRetraso,
   actualizarStock,
 } from "../controllers/botController.js";
 import { registrarObrero, getUserByPhone } from "../controllers/obrerosController.js";
+import { crearTareaDesdeBot } from "../controllers/tareasController.js";
+import { completarRubroDesdeBot } from "../controllers/rubrosController.js";
+import { crearGastoDesdeBot } from "../controllers/gastosController.js";
 
 const router = Router();
 
@@ -18,10 +20,16 @@ router.use(botAuthMiddleware);
 router.post("/mensaje", recibirMensaje);
 
 // Endpoints específicos que Facu llama según lo que detectó en el mensaje
-router.post("/subtarea", crearSubtareaDesdeBot);
 router.post("/pedidoDeCompra", crearPedidoDeCompra);
 router.post("/retraso", registrarRetraso);
 router.post("/stock", actualizarStock);
+
+// Tareas
+router.post("/tareas", crearTareaDesdeBot);
+router.patch("/tareas/:id/completar", completarRubroDesdeBot);
+
+// Gastos
+router.post("/gastos", crearGastoDesdeBot);
 
 // Obreros
 router.post("/obreros/registrar", registrarObrero);

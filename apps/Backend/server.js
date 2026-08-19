@@ -24,6 +24,8 @@ import gastosRoutes from "./routes/gastos.js";
 import actividadRoutes from "./routes/actividad.js";
 import reportesRoutes from "./routes/reportes.js";
 import obrerosRoutes from "./routes/obreros.js";
+import pedidosRoutes from "./routes/pedidos.js";
+import { verificarInactividad } from "./controllers/alertasController.js";
 
 dotenv.config();
 
@@ -89,6 +91,9 @@ app.use("/reportes", reportesRoutes);
 // Obreros
 app.use("/obreros", obrerosRoutes);
 
+// Pedidos (aprobación)
+app.use("/pedidos", pedidosRoutes);
+
 // Health check
 app.get("/", (req, res) => {
   res.send("BuildData API funcionando");
@@ -99,3 +104,9 @@ const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Servidor en http://localhost:${PORT}`);
 });
+
+// Sistema de alertas: detección de inactividad. No hay job runner en este Backend
+// (Express solo), así que un setInterval alcanza para un solo proceso.
+const INACTIVIDAD_CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000; // cada 6 horas
+verificarInactividad();
+setInterval(verificarInactividad, INACTIVIDAD_CHECK_INTERVAL_MS);

@@ -1,31 +1,20 @@
 export interface EndpointParam {
   name: string;
-  type: "string" | "number" | "array" | "object";
+  type: "string" | "number" | "boolean" | "array" | "object";
   description: string;
   required: boolean;
-  source: "obra_poll" | "user_phone" | "llm" | "auto";
+  source: "obra_poll" | "user_phone" | "llm" | "auto" | "entity_resolution";
   isName?: boolean;
 }
 
 export interface EndpointSchema {
   path: string;
-  method: "POST" | "GET";
+  method: "POST" | "GET" | "PATCH";
   description: string;
   params: EndpointParam[];
 }
 
 export const ENDPOINTS: EndpointSchema[] = [
-  {
-    path: "/bot/subtarea",
-    method: "POST",
-    description: "Registrar trabajo realizado por un obrero (ej: 'terminé de pintar la pared')",
-    params: [
-      { name: "obra_id", type: "string", description: "ID o nombre de la obra", required: true, source: "obra_poll" },
-      { name: "telefono", type: "string", description: "Teléfono del obrero que reporta", required: true, source: "user_phone" },
-      { name: "titulo", type: "string", description: "Título breve del trabajo (ej: 'Pintar pared sur')", required: true, source: "llm" },
-      { name: "descripcion", type: "string", description: "Descripción detallada del trabajo", required: false, source: "llm" },
-    ],
-  },
   {
     path: "/bot/stock",
     method: "POST",
@@ -56,6 +45,42 @@ export const ENDPOINTS: EndpointSchema[] = [
       { name: "telefono", type: "string", description: "Teléfono del obrero", required: true, source: "user_phone" },
       { name: "tarea", type: "string", description: "Nombre de la tarea atrasada (ej: 'Entrega de ladrillos')", required: true, source: "llm", isName: true },
       { name: "dias_retraso", type: "number", description: "Cantidad de días de retraso", required: true, source: "llm" },
+    ],
+  },
+  {
+    path: "/bot/tareas",
+    method: "POST",
+    description: "Registrar un reporte breve a partir de un mensaje de un obrero (ej: 'hay que pintar la pared del baño', 'terminé de pintar la pared')",
+    params: [
+      { name: "obra_id", type: "string", description: "ID o nombre de la obra", required: true, source: "obra_poll" },
+      { name: "creada_por_telefono", type: "string", description: "Teléfono del obrero que reporta", required: true, source: "user_phone" },
+      { name: "titulo", type: "string", description: "Título breve del reporte (máx 150 caracteres)", required: true, source: "llm" },
+      { name: "descripcion", type: "string", description: "Descripción detallada del reporte", required: false, source: "llm" },
+      { name: "rubro_id", type: "string", description: "Nombre del rubro al que corresponde (ej: 'Pintura', 'Electricidad')", required: false, source: "llm", isName: true },
+    ],
+  },
+  {
+    path: "/bot/tareas/:id/completar",
+    method: "PATCH",
+    description: "Marcar una tarea como terminada, o revertir esa marca, a partir de un mensaje de un obrero (ej: 'terminé de pintar la pared')",
+    params: [
+      { name: "id", type: "string", description: "UUID de la tarea, resuelto por el pipeline de match de entidades (match_tareas), no lo genera el LLM", required: true, source: "entity_resolution" },
+      { name: "completada", type: "boolean", description: "true si el obrero terminó el trabajo, false si hay que revertir una marca anterior", required: true, source: "llm" },
+      { name: "completada_por_telefono", type: "string", description: "Teléfono del obrero que completó el trabajo (requerido si completada=true)", required: false, source: "user_phone" },
+      { name: "porcentaje_avance", type: "number", description: "Porcentaje de avance (opcional; default 100 si completada=true, sin cambio si completada=false)", required: false, source: "llm" },
+    ],
+  },
+  {
+    path: "/bot/gastos",
+    method: "POST",
+    description: "Registrar un gasto a partir de un mensaje de un obrero (ej: 'gastamos 500 pesos en carpintería', 'pagué 20000 de flete')",
+    params: [
+      { name: "obra_id", type: "string", description: "ID o nombre de la obra", required: true, source: "obra_poll" },
+      { name: "telefono", type: "string", description: "Teléfono del obrero", required: true, source: "user_phone" },
+      { name: "monto", type: "number", description: "Monto del gasto", required: true, source: "llm" },
+      { name: "rubro_id", type: "string", description: "Nombre del rubro del gasto si se menciona (ej: 'carpintería', 'flete'); si no se menciona, no incluir el campo", required: false, source: "llm", isName: true },
+      { name: "descripcion", type: "string", description: "Detalle adicional del gasto, si lo hay", required: false, source: "llm" },
+      { name: "moneda", type: "string", description: "'ARS' o 'USD' — 'USD' solo si se menciona explícitamente dólares/USD, si no 'ARS'", required: false, source: "llm" },
     ],
   },
   {

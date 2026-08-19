@@ -39,6 +39,7 @@ async function buildObra(obra) {
     lastActivity: obra.last_activity,
     lastActivityWho: obra.last_activity_who,
     starred: obra.starred || false,
+    autoApprove: obra.aprobacion_automatica || false,
   };
 }
 
@@ -49,8 +50,8 @@ export async function getObras(req, res) {
       `SELECT o.*,
         (SELECT COUNT(*) FROM alertas a WHERE a.obra_id = o.id AND a.resuelta = false) AS alerts,
         (SELECT COUNT(*) FROM pedidos_materiales p WHERE p.obra_id = o.id AND p.aprobado = false) AS pedidos,
-        (SELECT COUNT(*) FROM tareas t WHERE t.obra_id = o.id) AS tareas_total,
-        (SELECT COUNT(*) FROM tareas t WHERE t.obra_id = o.id AND t.estado = 'completada') AS tareas_completadas
+        (SELECT COUNT(*) FROM rubros r WHERE r.obra_id = o.id) AS tareas_total,
+        (SELECT COUNT(*) FROM rubros r WHERE r.obra_id = o.id AND r.estado = 'completada') AS tareas_completadas
        FROM obras o
        JOIN miembros_obra mo ON mo.obra_id = o.id
        JOIN personas p ON p.id = mo.persona_id AND p.auth_user_id = $1
@@ -179,23 +180,24 @@ export async function crearObra(req, res) {
 // PATCH /obras/:obraId
 export async function updateObra(req, res) {
   const { obraId } = req.params;
-  const { name, status, type, address, city, province, zip, startDate, endDate } = req.body;
+  const { name, status, type, address, city, province, zip, startDate, endDate, autoApprove } = req.body;
   try {
     const result = await pool.query(
       `UPDATE obras SET
-        nombre            = CASE WHEN $1::text IS NOT NULL THEN $1 ELSE nombre END,
-        estado            = CASE WHEN $2::text IS NOT NULL THEN $2 ELSE estado END,
-        type              = CASE WHEN $3::text IS NOT NULL THEN $3 ELSE type END,
-        direccion         = CASE WHEN $4::text IS NOT NULL THEN $4 ELSE direccion END,
-        city              = CASE WHEN $5::text IS NOT NULL THEN $5 ELSE city END,
-        province          = CASE WHEN $6::text IS NOT NULL THEN $6 ELSE province END,
-        zip               = CASE WHEN $7::text IS NOT NULL THEN $7 ELSE zip END,
-        fecha_inicio      = CASE WHEN $8::text IS NOT NULL THEN $8::date ELSE fecha_inicio END,
-        fecha_fin_estimada= CASE WHEN $9::text IS NOT NULL THEN $9::date ELSE fecha_fin_estimada END
+        nombre                = CASE WHEN $1::text IS NOT NULL THEN $1 ELSE nombre END,
+        estado                = CASE WHEN $2::text IS NOT NULL THEN $2 ELSE estado END,
+        type                  = CASE WHEN $3::text IS NOT NULL THEN $3 ELSE type END,
+        direccion             = CASE WHEN $4::text IS NOT NULL THEN $4 ELSE direccion END,
+        city                  = CASE WHEN $5::text IS NOT NULL THEN $5 ELSE city END,
+        province              = CASE WHEN $6::text IS NOT NULL THEN $6 ELSE province END,
+        zip                   = CASE WHEN $7::text IS NOT NULL THEN $7 ELSE zip END,
+        fecha_inicio          = CASE WHEN $8::text IS NOT NULL THEN $8::date ELSE fecha_inicio END,
+        fecha_fin_estimada    = CASE WHEN $9::text IS NOT NULL THEN $9::date ELSE fecha_fin_estimada END,
+        aprobacion_automatica = CASE WHEN $11::boolean IS NOT NULL THEN $11 ELSE aprobacion_automatica END
        WHERE id = $10 RETURNING *`,
       [name ?? null, status ?? null, type ?? null, address ?? null,
        city ?? null, province ?? null, zip ?? null,
-       startDate ?? null, endDate ?? null, obraId]
+       startDate ?? null, endDate ?? null, obraId, autoApprove ?? null]
     );
     if (!result.rows[0]) return res.status(404).json({ code: "NOT_FOUND", message: "Obra no encontrada" });
     const full = await pool.query(
