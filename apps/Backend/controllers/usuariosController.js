@@ -16,9 +16,10 @@ export async function getEquipo(req, res) {
     const equipo = await Promise.all(
       result.rows.map(async (usuario) => {
         const tareas = await pool.query(
-          `SELECT id, nombre AS titulo, estado, porcentaje_avance
-           FROM rubros
-           WHERE obra_id = $1 AND asignado_a = $2`,
+          `SELECT t.id, t.titulo, t.estado
+           FROM tareas t
+           JOIN miembros_obra mo ON t.asignado_a = mo.id
+           WHERE t.obra_id = $1 AND mo.persona_id = $2`,
           [obra_id, usuario.id]
         );
         return { ...usuario, tareas: tareas.rows };

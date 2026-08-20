@@ -11,27 +11,27 @@ export async function getDashboard(req, res) {
     );
     const obra = obraResult.rows[0];
 
-    // Stats de tareas (rubros: absorbió el ítem programable que antes tenía tareas)
+    // Stats de tareas
     const tareasResult = await pool.query(
       `SELECT
         COUNT(*) FILTER (WHERE estado = 'completada') AS completadas,
         COUNT(*) AS total
-       FROM rubros WHERE obra_id = $1`,
+       FROM tareas WHERE obra_id = $1`,
       [obraId]
     );
     const tareas = tareasResult.rows[0];
     const tareasListResult = await pool.query(
       `SELECT
           id,
-          nombre AS titulo,
+          titulo,
           estado,
           prioridad,
           porcentaje_avance,
           fecha_inicio,
           fecha_limite
-      FROM rubros
+      FROM tareas
       WHERE obra_id = $1
-      ORDER BY fecha_inicio ASC`,
+      ORDER BY created_at DESC`,
       [obraId]
 );
 
@@ -154,7 +154,7 @@ const pedidosConItems = await Promise.all(
         // Comparación semana actual vs semana anterior
     const semanaActualResult = await pool.query(
       `SELECT COUNT(*) AS total
-       FROM rubros
+       FROM tareas
        WHERE obra_id = $1
        AND fecha_completada >= date_trunc('week', CURRENT_DATE)`,
       [obraId]
@@ -162,7 +162,7 @@ const pedidosConItems = await Promise.all(
 
     const semanaAnteriorResult = await pool.query(
       `SELECT COUNT(*) AS total
-       FROM rubros
+       FROM tareas
        WHERE obra_id = $1
        AND fecha_completada >= date_trunc('week', CURRENT_DATE) - interval '1 week'
        AND fecha_completada < date_trunc('week', CURRENT_DATE)`,

@@ -50,8 +50,8 @@ export async function getObras(req, res) {
       `SELECT o.*,
         (SELECT COUNT(*) FROM alertas a WHERE a.obra_id = o.id AND a.resuelta = false) AS alerts,
         (SELECT COUNT(*) FROM pedidos_materiales p WHERE p.obra_id = o.id AND p.aprobado = false) AS pedidos,
-        (SELECT COUNT(*) FROM rubros r WHERE r.obra_id = o.id) AS tareas_total,
-        (SELECT COUNT(*) FROM rubros r WHERE r.obra_id = o.id AND r.estado = 'completada') AS tareas_completadas
+        (SELECT COUNT(*) FROM tareas t WHERE t.obra_id = o.id) AS tareas_total,
+        (SELECT COUNT(*) FROM tareas t WHERE t.obra_id = o.id AND t.estado = 'completada') AS tareas_completadas
        FROM obras o
        JOIN miembros_obra mo ON mo.obra_id = o.id
        JOIN personas p ON p.id = mo.persona_id AND p.auth_user_id = $1

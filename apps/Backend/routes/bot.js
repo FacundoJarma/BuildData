@@ -8,7 +8,7 @@ import {
 } from "../controllers/botController.js";
 import { registrarObrero, getUserByPhone } from "../controllers/obrerosController.js";
 import { crearTareaDesdeBot } from "../controllers/tareasController.js";
-import { completarRubroDesdeBot } from "../controllers/rubrosController.js";
+import { completarTareaDesdeBot } from "../controllers/tareasController.js";
 import { crearGastoDesdeBot } from "../controllers/gastosController.js";
 
 const router = Router();
@@ -26,7 +26,7 @@ router.post("/stock", actualizarStock);
 
 // Tareas
 router.post("/tareas", crearTareaDesdeBot);
-router.patch("/tareas/:id/completar", completarRubroDesdeBot);
+router.patch("/tareas/:id/completar", completarTareaDesdeBot);
 
 // Gastos
 router.post("/gastos", crearGastoDesdeBot);

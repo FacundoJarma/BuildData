@@ -1,217 +1,302 @@
--- 1. tareas: agregar asignado_a
-ALTER TABLE tareas ADD COLUMN IF NOT EXISTS asignado_a UUID REFERENCES personas(id);
+-- WARNING: This schema is for context only and is not meant to be run.
+-- Table order and constraints may not be valid for execution.
 
--- 2. subtareas: agregar created_by
-ALTER TABLE subtareas ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES personas(id);
-
--- 3. pedidos_materiales: agregar aprobado_por y fecha_aprobacion
-ALTER TABLE pedidos_materiales
-  ADD COLUMN IF NOT EXISTS aprobado_por UUID REFERENCES personas(id),
-  ADD COLUMN IF NOT EXISTS fecha_aprobacion TIMESTAMP;
-
--- 4. gastos: agregar usuario_id y pedido_id
-ALTER TABLE gastos
-  ADD COLUMN IF NOT EXISTS usuario_id UUID REFERENCES personas(id),
-  ADD COLUMN IF NOT EXISTS pedido_id UUID REFERENCES pedidos_materiales(id);
-
--- 5. mensajes: agregar estado de procesamiento
-ALTER TABLE mensajes
-  ADD COLUMN IF NOT EXISTS estado_procesamiento VARCHAR(30) DEFAULT 'pendiente',
-  ADD COLUMN IF NOT EXISTS error_detalle TEXT;
-
--- 6. alertas: agregar usuario_id destinatario
-ALTER TABLE alertas ADD COLUMN IF NOT EXISTS usuario_id UUID REFERENCES personas(id);
-
--- 7. TABLA NUEVA: pedidos_items (detalle de cada pedido)
-CREATE TABLE IF NOT EXISTS pedidos_items (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  pedido_id UUID REFERENCES pedidos_materiales(id) ON DELETE CASCADE,
-  material_id UUID REFERENCES materiales(id),
-  cantidad NUMERIC(10,2),
-  precio_unitario NUMERIC(10,2)
+CREATE TABLE public.obras (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  nombre character varying NOT NULL,
+  direccion text,
+  descripcion text,
+  fecha_inicio date,
+  fecha_fin_estimada date,
+  estado character varying DEFAULT 'activa'::character varying,
+  presupuesto_total numeric,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  code character varying,
+  type character varying,
+  city character varying,
+  province character varying,
+  zip character varying,
+  country character varying DEFAULT 'ar'::character varying,
+  progress integer DEFAULT 0,
+  starred boolean DEFAULT false,
+  last_activity timestamp without time zone,
+  last_activity_who text,
+  aprobacion_automatica boolean NOT NULL DEFAULT false,
+  CONSTRAINT obras_pkey PRIMARY KEY (id)
 );
-
--- 8. TABLA NUEVA: movimientos_stock (trazabilidad de materiales)
-CREATE TABLE IF NOT EXISTS movimientos_stock (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  material_id UUID REFERENCES materiales(id) ON DELETE CASCADE,
-  obra_id UUID REFERENCES obras(id),
-  usuario_id UUID REFERENCES personas(id),
-  tarea_id UUID REFERENCES tareas(id),
-  tipo VARCHAR(20) NOT NULL, -- 'entrada' o 'salida'
-  cantidad NUMERIC(10,2),
-  fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  observacion TEXT
+CREATE TABLE public.tareas (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  obra_id uuid NOT NULL,
+  titulo character varying NOT NULL,
+  descripcion text,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  rubro_id uuid,
+  created_by uuid,
+  usuario_id uuid,
+  estado character varying NOT NULL DEFAULT 'pendiente'::character varying CHECK (estado::text = ANY (ARRAY['pendiente'::character varying, 'en_progreso'::character varying, 'completada'::character varying, 'cancelada'::character varying]::text[])),
+  prioridad character varying CHECK (prioridad::text = ANY (ARRAY['baja'::character varying, 'media'::character varying, 'alta'::character varying, 'urgente'::character varying]::text[])),
+  fecha_inicio date,
+  fecha_limite date,
+  fecha_completada timestamp without time zone,
+  asignado_a uuid,
+  completada_por uuid,
+  costo_estimado numeric,
+  CONSTRAINT tareas_pkey PRIMARY KEY (id),
+  CONSTRAINT tareas_obra_id_fkey FOREIGN KEY (obra_id) REFERENCES public.obras(id),
+  CONSTRAINT tareas_rubro_id_fkey FOREIGN KEY (rubro_id) REFERENCES public.rubros(id),
+  CONSTRAINT tareas_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.personas(id),
+  CONSTRAINT tareas_usuario_id_fkey FOREIGN KEY (usuario_id) REFERENCES public.personas(id),
+  CONSTRAINT tareas_asignado_a_fkey FOREIGN KEY (asignado_a) REFERENCES public.miembros_obra(id),
+  CONSTRAINT tareas_completada_por_fkey FOREIGN KEY (completada_por) REFERENCES public.miembros_obra(id)
 );
-
--- 9. Índices adicionales
-CREATE INDEX IF NOT EXISTS idx_subtareas_tarea ON subtareas(tarea_id);
-CREATE INDEX IF NOT EXISTS idx_pedidos_obra ON pedidos_materiales(obra_id);
-CREATE INDEX IF NOT EXISTS idx_alertas_obra ON alertas(obra_id);
-CREATE INDEX IF NOT EXISTS idx_gastos_obra ON gastos(obra_id);
-CREATE INDEX IF NOT EXISTS idx_movimientos_material ON movimientos_stock(material_id);
-CREATE INDEX IF NOT EXISTS idx_mensajes_estado ON mensajes(estado_procesamiento);
-
--- 10. tareas: agregar creada_por (requerido por POST /bot/tareas)
-ALTER TABLE tareas ADD COLUMN IF NOT EXISTS creada_por UUID REFERENCES personas(id);
-
--- 11. movimientos_stock: la FK de usuario_id apuntaba a auth.users (resto de la migración
--- perfiles/obreros → personas que no se había completado en esta tabla). La redirigimos a personas.
-ALTER TABLE movimientos_stock DROP CONSTRAINT IF EXISTS movimientos_stock_usuario_id_fkey;
-ALTER TABLE movimientos_stock ADD CONSTRAINT movimientos_stock_usuario_id_fkey FOREIGN KEY (usuario_id) REFERENCES personas(id);
-
--- 12. Reestructuración tareas/rubros: subtareas se elimina (drop hecho fuera de este log),
--- rubros absorbe el ítem programable (fechas, prioridad, asignado, costo, estado) que antes
--- tenía tareas — 1 fila por rubro/obra, nombre sigue sirviendo de título. tareas se simplifica
--- a reporte granular, sucesora directa de subtareas (rubro_id opcional en vez de tarea_id).
--- 12a. rubros: absorbe las columnas de "tareas"
-ALTER TABLE rubros
-  ADD COLUMN IF NOT EXISTS descripcion TEXT,
-  ADD COLUMN IF NOT EXISTS estado VARCHAR(30) DEFAULT 'pendiente',
-  ADD COLUMN IF NOT EXISTS prioridad VARCHAR(20),
-  ADD COLUMN IF NOT EXISTS fecha_inicio DATE,
-  ADD COLUMN IF NOT EXISTS fecha_limite DATE,
-  ADD COLUMN IF NOT EXISTS porcentaje_avance INTEGER DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS costo_estimado NUMERIC,
-  ADD COLUMN IF NOT EXISTS asignado_a UUID REFERENCES personas(id),
-  ADD COLUMN IF NOT EXISTS creada_por UUID REFERENCES personas(id),
-  ADD COLUMN IF NOT EXISTS completada_por UUID REFERENCES personas(id),
-  ADD COLUMN IF NOT EXISTS fecha_completada TIMESTAMP;
-
--- 12b. tareas: se simplifica a reporte granular (sucesora de subtareas)
-ALTER TABLE tareas RENAME COLUMN creada_por TO usuario_id;
-ALTER TABLE tareas RENAME CONSTRAINT tareas_creada_por_fkey TO tareas_usuario_id_fkey;
-ALTER TABLE tareas ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES personas(id);
-ALTER TABLE tareas ALTER COLUMN obra_id SET NOT NULL;
-ALTER TABLE tareas DROP COLUMN IF EXISTS estado;
-ALTER TABLE tareas DROP COLUMN IF EXISTS prioridad;
-ALTER TABLE tareas DROP COLUMN IF EXISTS fecha_inicio;
-ALTER TABLE tareas DROP COLUMN IF EXISTS fecha_limite;
-ALTER TABLE tareas DROP COLUMN IF EXISTS porcentaje_avance;
-ALTER TABLE tareas DROP COLUMN IF EXISTS costo_estimado;
-ALTER TABLE tareas DROP COLUMN IF EXISTS asignado_a;
-ALTER TABLE tareas DROP COLUMN IF EXISTS completada_por;
-ALTER TABLE tareas DROP COLUMN IF EXISTS fecha_completada;
-ALTER TABLE tareas DROP COLUMN IF EXISTS updated_at;
-
--- 12c. movimientos_stock: tarea_id -> rubro_id (consumo de material se ata al rubro)
-ALTER TABLE movimientos_stock DROP CONSTRAINT IF EXISTS movimientos_stock_tarea_id_fkey;
-ALTER TABLE movimientos_stock RENAME COLUMN tarea_id TO rubro_id;
-ALTER TABLE movimientos_stock ADD CONSTRAINT movimientos_stock_rubro_id_fkey
-  FOREIGN KEY (rubro_id) REFERENCES rubros(id);
-
--- 12d. Índices
-CREATE INDEX IF NOT EXISTS idx_tareas_obra ON tareas(obra_id);
-CREATE INDEX IF NOT EXISTS idx_tareas_rubro ON tareas(rubro_id);
-CREATE INDEX IF NOT EXISTS idx_movimientos_rubro ON movimientos_stock(rubro_id);
-
--- 13. rubros: agregar updated_at (requerido por PATCH /bot/tareas/:id/completar)
-ALTER TABLE rubros ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
-
--- 14. Ajustes de schema en tabla gastos (requerido por POST /bot/gastos)
-ALTER TABLE gastos
-  ADD COLUMN IF NOT EXISTS moneda VARCHAR(10) DEFAULT 'ARS',
-  ADD COLUMN IF NOT EXISTS origen VARCHAR(20) DEFAULT 'manual',
-  ADD COLUMN IF NOT EXISTS revisado BOOLEAN DEFAULT true,
-  ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
-
--- 15. Crear tabla comprobantes_facturas (+ factura_items): detalle de gastos originados en imagen.
--- Una sola tabla con tipo_documento + columnas nullable (comprobante y factura son mutuamente
--- excluyentes según vision.service.ts). Tipado real (DATE/NUMERIC), no passthrough de strings del OCR
--- — el backend parsea fecha (DD/MM/YYYY) y montos (formato argentino) antes de insertar.
-CREATE TABLE IF NOT EXISTS comprobantes_facturas (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  gasto_id UUID REFERENCES gastos(id) ON DELETE CASCADE,
-  tipo_documento VARCHAR(20) NOT NULL, -- 'comprobante' o 'factura'
-  obra_id UUID REFERENCES obras(id),
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  imagen_url TEXT, -- opcional, si se decide guardar la foto original en storage
-  -- comprobante (ComprobanteData)
-  tipo VARCHAR(50),
-  fecha DATE,
-  monto NUMERIC(12,2),
-  moneda VARCHAR(10),
-  origen TEXT,
-  destino TEXT,
-  numero_operacion VARCHAR(100),
-  entidad VARCHAR(255),
-  -- factura (FacturaData)
-  tipo_factura VARCHAR(1),
-  numero VARCHAR(50),
-  fecha_vencimiento DATE,
-  emisor TEXT,
-  cuit_emisor VARCHAR(20),
-  receptor TEXT,
-  cuit_receptor VARCHAR(20),
-  subtotal NUMERIC(12,2),
-  iva NUMERIC(12,2),
-  total NUMERIC(12,2)
+CREATE TABLE public.materiales (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  obra_id uuid,
+  nombre character varying NOT NULL,
+  categoria character varying,
+  unidad character varying,
+  stock_actual numeric,
+  stock_minimo numeric,
+  costo_unitario numeric,
+  CONSTRAINT materiales_pkey PRIMARY KEY (id),
+  CONSTRAINT materiales_obra_id_fkey FOREIGN KEY (obra_id) REFERENCES public.obras(id)
 );
-
-CREATE TABLE IF NOT EXISTS factura_items (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  factura_id UUID REFERENCES comprobantes_facturas(id) ON DELETE CASCADE,
-  descripcion TEXT,
-  cantidad NUMERIC,
-  precio_unitario NUMERIC(12,2),
-  subtotal NUMERIC(12,2)
+CREATE TABLE public.movimientos_stock (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  material_id uuid,
+  obra_id uuid,
+  usuario_id uuid,
+  rubro_id uuid,
+  tipo character varying NOT NULL,
+  cantidad numeric,
+  fecha timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  observacion text,
+  CONSTRAINT movimientos_stock_pkey PRIMARY KEY (id),
+  CONSTRAINT movimientos_stock_material_id_fkey FOREIGN KEY (material_id) REFERENCES public.materiales(id),
+  CONSTRAINT movimientos_stock_obra_id_fkey FOREIGN KEY (obra_id) REFERENCES public.obras(id),
+  CONSTRAINT movimientos_stock_usuario_id_fkey FOREIGN KEY (usuario_id) REFERENCES public.personas(id),
+  CONSTRAINT movimientos_stock_rubro_id_fkey FOREIGN KEY (rubro_id) REFERENCES public.rubros(id)
 );
-
-CREATE INDEX IF NOT EXISTS idx_comprobantes_facturas_gasto ON comprobantes_facturas(gasto_id);
-CREATE INDEX IF NOT EXISTS idx_comprobantes_facturas_obra ON comprobantes_facturas(obra_id);
-CREATE INDEX IF NOT EXISTS idx_factura_items_factura ON factura_items(factura_id);
-
--- 16. Ajustes de schema en tabla gastos (ticket dedicado, refina lo de los ítems 14/15):
--- moneda/origen NOT NULL, categoria (texto libre) -> rubro_id (FK a rubros, decidido con el
--- equipo: reusa el mismo catálogo/pipeline que tareas.rubro_id), revisado default false
--- (antes true — el flag es específicamente para gastos extraídos por OCR/IA, no para carga manual;
--- crearGasto ahora setea revisado=true explícito al insertar), updated_at, e índice compuesto
--- (obra_id, fecha) en vez de solo obra_id, ya que reportes de gastos casi siempre filtran por fecha.
-ALTER TABLE gastos ALTER COLUMN moneda SET NOT NULL;
-ALTER TABLE gastos DROP COLUMN IF EXISTS categoria;
-ALTER TABLE gastos ADD COLUMN IF NOT EXISTS rubro_id UUID REFERENCES rubros(id);
-ALTER TABLE gastos ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
-ALTER TABLE gastos ALTER COLUMN origen SET NOT NULL;
-ALTER TABLE gastos ALTER COLUMN revisado SET DEFAULT false;
-ALTER TABLE gastos ALTER COLUMN revisado SET NOT NULL;
-DROP INDEX IF EXISTS idx_gastos_obra;
-CREATE INDEX IF NOT EXISTS idx_gastos_obra_fecha ON gastos(obra_id, fecha);
-
--- 17. obras: toggle para desactivar aprobación manual de pedidos (requerido por
--- POST /bot/pedidoDeCompra y PATCH /pedidos/:id/aprobar|rechazar).
-ALTER TABLE obras ADD COLUMN IF NOT EXISTS aprobacion_automatica BOOLEAN NOT NULL DEFAULT false;
-
--- 18. Re-aplicar la reestructuración tareas/rubros del ítem 12: un merge con una rama
--- paralela había revertido el schema en la base compartida (estado/prioridad/fechas/asignado
--- de vuelta en tareas, tareas.usuario_id perdido) sin que el código se enterara. Los valores que
--- había en esas columnas al momento de revertir eran todos default (ninguna fila real tenía datos
--- propios), así que no se perdió información al volver a mover todo a rubros. De paso, se sacaron
--- dos FKs rotas que la otra rama había dejado apuntando a miembros_obra en vez de personas, y un
--- trigger (trg_tareas_updated_at) que dependía de tareas.updated_at.
-ALTER TABLE rubros
-  ADD COLUMN IF NOT EXISTS estado VARCHAR(30) DEFAULT 'pendiente',
-  ADD COLUMN IF NOT EXISTS prioridad VARCHAR(20),
-  ADD COLUMN IF NOT EXISTS fecha_inicio DATE,
-  ADD COLUMN IF NOT EXISTS fecha_limite DATE,
-  ADD COLUMN IF NOT EXISTS asignado_a UUID REFERENCES personas(id),
-  ADD COLUMN IF NOT EXISTS creada_por UUID REFERENCES personas(id),
-  ADD COLUMN IF NOT EXISTS completada_por UUID REFERENCES personas(id),
-  ADD COLUMN IF NOT EXISTS fecha_completada TIMESTAMP;
-
-DROP TRIGGER IF EXISTS trg_tareas_updated_at ON tareas;
-ALTER TABLE tareas DROP CONSTRAINT IF EXISTS fk_tareas_created_by;
-ALTER TABLE tareas DROP CONSTRAINT IF EXISTS tareas_asignado_a_fkey;
-ALTER TABLE tareas DROP CONSTRAINT IF EXISTS tareas_completada_por_fkey;
-ALTER TABLE tareas DROP COLUMN IF EXISTS estado;
-ALTER TABLE tareas DROP COLUMN IF EXISTS prioridad;
-ALTER TABLE tareas DROP COLUMN IF EXISTS asignado_a;
-ALTER TABLE tareas DROP COLUMN IF EXISTS completada_por;
-ALTER TABLE tareas DROP COLUMN IF EXISTS fecha_completada;
-ALTER TABLE tareas DROP COLUMN IF EXISTS fecha_limite;
-ALTER TABLE tareas DROP COLUMN IF EXISTS fecha_inicio;
-ALTER TABLE tareas DROP COLUMN IF EXISTS updated_at;
-ALTER TABLE tareas DROP COLUMN IF EXISTS porcentaje_avance;
-
-ALTER TABLE tareas ADD COLUMN IF NOT EXISTS usuario_id UUID REFERENCES personas(id);
-UPDATE tareas SET usuario_id = created_by WHERE usuario_id IS NULL;
-
+CREATE TABLE public.proveedores (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  nombre character varying,
+  telefono character varying,
+  email character varying,
+  CONSTRAINT proveedores_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.materiales_proveedores (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  material_id uuid,
+  proveedor_id uuid,
+  CONSTRAINT materiales_proveedores_pkey PRIMARY KEY (id),
+  CONSTRAINT materiales_proveedores_material_id_fkey FOREIGN KEY (material_id) REFERENCES public.materiales(id),
+  CONSTRAINT materiales_proveedores_proveedor_id_fkey FOREIGN KEY (proveedor_id) REFERENCES public.proveedores(id)
+);
+CREATE TABLE public.pedidos_materiales (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  obra_id uuid,
+  proveedor_id uuid,
+  fecha_aprobacion timestamp without time zone,
+  estado character varying DEFAULT 'pendiente'::character varying,
+  aprobado boolean DEFAULT false,
+  fecha timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  aprobado_por uuid,
+  CONSTRAINT pedidos_materiales_pkey PRIMARY KEY (id),
+  CONSTRAINT pedidos_materiales_obra_id_fkey FOREIGN KEY (obra_id) REFERENCES public.obras(id),
+  CONSTRAINT pedidos_materiales_proveedor_id_fkey FOREIGN KEY (proveedor_id) REFERENCES public.proveedores(id),
+  CONSTRAINT pedidos_materiales_aprobado_por_fkey FOREIGN KEY (aprobado_por) REFERENCES public.personas(id)
+);
+CREATE TABLE public.pedidos_items (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  pedido_id uuid,
+  material_id uuid,
+  cantidad numeric,
+  precio_unitario numeric,
+  CONSTRAINT pedidos_items_pkey PRIMARY KEY (id),
+  CONSTRAINT pedidos_items_pedido_id_fkey FOREIGN KEY (pedido_id) REFERENCES public.pedidos_materiales(id),
+  CONSTRAINT pedidos_items_material_id_fkey FOREIGN KEY (material_id) REFERENCES public.materiales(id)
+);
+CREATE TABLE public.gastos (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  obra_id uuid,
+  pedido_id uuid,
+  descripcion text,
+  monto numeric,
+  fecha date DEFAULT CURRENT_DATE,
+  usuario_id uuid,
+  moneda character varying NOT NULL DEFAULT 'ARS'::character varying,
+  origen character varying NOT NULL DEFAULT 'manual'::character varying,
+  revisado boolean NOT NULL DEFAULT false,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  rubro_id uuid,
+  updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT gastos_pkey PRIMARY KEY (id),
+  CONSTRAINT gastos_obra_id_fkey FOREIGN KEY (obra_id) REFERENCES public.obras(id),
+  CONSTRAINT gastos_pedido_id_fkey FOREIGN KEY (pedido_id) REFERENCES public.pedidos_materiales(id),
+  CONSTRAINT gastos_usuario_id_fkey FOREIGN KEY (usuario_id) REFERENCES public.personas(id),
+  CONSTRAINT gastos_rubro_id_fkey FOREIGN KEY (rubro_id) REFERENCES public.rubros(id)
+);
+CREATE TABLE public.mensajes (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  obra_id uuid,
+  tipo character varying,
+  contenido text,
+  procesado boolean DEFAULT false,
+  estado_procesamiento character varying DEFAULT 'pendiente'::character varying,
+  error_detalle text,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  usuario_id uuid,
+  CONSTRAINT mensajes_pkey PRIMARY KEY (id),
+  CONSTRAINT mensajes_obra_id_fkey FOREIGN KEY (obra_id) REFERENCES public.obras(id),
+  CONSTRAINT mensajes_usuario_id_fkey FOREIGN KEY (usuario_id) REFERENCES public.personas(id)
+);
+CREATE TABLE public.alertas (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  obra_id uuid,
+  tipo character varying,
+  mensaje text,
+  prioridad character varying,
+  resuelta boolean DEFAULT false,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  titulo character varying,
+  subtitulo text,
+  severity character varying DEFAULT 'attention'::character varying,
+  resolved_at timestamp without time zone,
+  usuario_id uuid,
+  CONSTRAINT alertas_pkey PRIMARY KEY (id),
+  CONSTRAINT alertas_obra_id_fkey FOREIGN KEY (obra_id) REFERENCES public.obras(id),
+  CONSTRAINT alertas_usuario_id_fkey FOREIGN KEY (usuario_id) REFERENCES public.personas(id)
+);
+CREATE TABLE public.reportes (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  obra_id uuid,
+  titulo character varying,
+  contenido text,
+  fecha_generacion timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT reportes_pkey PRIMARY KEY (id),
+  CONSTRAINT reportes_obra_id_fkey FOREIGN KEY (obra_id) REFERENCES public.obras(id)
+);
+CREATE TABLE public.rubros (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  obra_id uuid,
+  nombre character varying NOT NULL,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  color character varying,
+  orden integer DEFAULT 0,
+  descripcion text,
+  porcentaje_avance integer DEFAULT 0,
+  updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT rubros_pkey PRIMARY KEY (id),
+  CONSTRAINT rubros_obra_id_fkey FOREIGN KEY (obra_id) REFERENCES public.obras(id)
+);
+CREATE TABLE public.presupuesto_rubros (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  rubro_id uuid,
+  cap integer DEFAULT 0,
+  spent integer DEFAULT 0,
+  updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT presupuesto_rubros_pkey PRIMARY KEY (id),
+  CONSTRAINT presupuesto_rubros_rubro_id_fkey FOREIGN KEY (rubro_id) REFERENCES public.rubros(id)
+);
+CREATE TABLE public.presupuestos (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  obra_id uuid UNIQUE,
+  total integer DEFAULT 0,
+  ejecutado integer DEFAULT 0,
+  comprometido integer DEFAULT 0,
+  updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT presupuestos_pkey PRIMARY KEY (id),
+  CONSTRAINT presupuestos_obra_id_fkey FOREIGN KEY (obra_id) REFERENCES public.obras(id)
+);
+CREATE TABLE public.actividad (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  obra_id uuid,
+  accion text NOT NULL,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  tipo character varying,
+  texto text,
+  entidad_tipo character varying,
+  entidad_id uuid,
+  usuario_id uuid,
+  CONSTRAINT actividad_pkey PRIMARY KEY (id),
+  CONSTRAINT actividad_obra_id_fkey FOREIGN KEY (obra_id) REFERENCES public.obras(id),
+  CONSTRAINT actividad_usuario_id_fkey FOREIGN KEY (usuario_id) REFERENCES public.personas(id)
+);
+CREATE TABLE public.archivos (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  obra_id uuid,
+  rubro_id uuid,
+  name character varying NOT NULL,
+  kind character varying NOT NULL,
+  size integer,
+  url text,
+  uploaded_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT archivos_pkey PRIMARY KEY (id),
+  CONSTRAINT archivos_obra_id_fkey FOREIGN KEY (obra_id) REFERENCES public.obras(id),
+  CONSTRAINT archivos_rubro_id_fkey FOREIGN KEY (rubro_id) REFERENCES public.rubros(id)
+);
+CREATE TABLE public.potential_clients (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  email text NOT NULL,
+  nombre text,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT potential_clients_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.personas (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  auth_user_id uuid UNIQUE,
+  nombre character varying NOT NULL,
+  telefono character varying UNIQUE,
+  created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT personas_pkey PRIMARY KEY (id),
+  CONSTRAINT personas_auth_user_id_fkey FOREIGN KEY (auth_user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.miembros_obra (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  persona_id uuid NOT NULL,
+  obra_id uuid NOT NULL,
+  rol character varying,
+  joined_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT miembros_obra_pkey PRIMARY KEY (id),
+  CONSTRAINT miembros_obra_persona_id_fkey FOREIGN KEY (persona_id) REFERENCES public.personas(id),
+  CONSTRAINT miembros_obra_obra_id_fkey FOREIGN KEY (obra_id) REFERENCES public.obras(id)
+);
+CREATE TABLE public.comprobantes_facturas (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  gasto_id uuid,
+  tipo_documento character varying NOT NULL,
+  obra_id uuid,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  imagen_url text,
+  tipo character varying,
+  fecha date,
+  monto numeric,
+  moneda character varying,
+  origen text,
+  destino text,
+  numero_operacion character varying,
+  entidad character varying,
+  tipo_factura character varying,
+  numero character varying,
+  fecha_vencimiento date,
+  emisor text,
+  cuit_emisor character varying,
+  receptor text,
+  cuit_receptor character varying,
+  subtotal numeric,
+  iva numeric,
+  total numeric,
+  CONSTRAINT comprobantes_facturas_pkey PRIMARY KEY (id),
+  CONSTRAINT comprobantes_facturas_gasto_id_fkey FOREIGN KEY (gasto_id) REFERENCES public.gastos(id),
+  CONSTRAINT comprobantes_facturas_obra_id_fkey FOREIGN KEY (obra_id) REFERENCES public.obras(id)
+);
+CREATE TABLE public.factura_items (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  factura_id uuid,
+  descripcion text,
+  cantidad numeric,
+  precio_unitario numeric,
+  subtotal numeric,
+  CONSTRAINT factura_items_pkey PRIMARY KEY (id),
+  CONSTRAINT factura_items_factura_id_fkey FOREIGN KEY (factura_id) REFERENCES public.comprobantes_facturas(id)
+);
