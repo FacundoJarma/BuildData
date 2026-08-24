@@ -4,13 +4,19 @@ import { useState, useEffect, useCallback } from "react";
 import { ChartBar, ListUl, Calendar, Plus } from "@gravity-ui/icons";
 import { DPageHeader } from "../../_components/DPageHeader";
 import Button from "@/components/ui/Button";
-import { getCronograma, type CronogramaData } from "@/services/mock/cronogramaService";
+import {
+  getCronograma,
+  completeCronogramaTask,
+  reopenCronogramaTask,
+  type CronogramaData,
+} from "@/services/cronogramaService";
+import { useDashboardData } from "../../_components/DashboardDataContext";
 import { GanttView } from "./GanttView";
 import { ListView } from "./ListView";
 import { CalendarView } from "./CalendarView";
 import { TaskDetail } from "./TaskDetail";
 import { NuevaTareaModal } from "./NuevaTareaModal";
-import type { TaskItem, TaskGroup } from "../data";
+import type { TaskGroup, Timeline } from "../data";
 import { TASK_STATE_MAP } from "../data";
 
 type ViewMode = "gantt" | "list" | "calendar";
@@ -23,21 +29,42 @@ const LEGENDS = [
 ];
 
 export function ScreenCronograma() {
+  const { obraId } = useDashboardData();
   const [groups, setGroups] = useState<TaskGroup[]>([]);
+  const [timeline, setTimeline] = useState<Timeline | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [view, setView] = useState<ViewMode>("gantt");
   const [pick, setPick] = useState<string | null>(null);
   const [newTaskOpen, setNewTaskOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
+  // El estado se actualiza dentro de los callbacks del fetch (no sincrónico
+  // en el cuerpo del efecto). Para recargar, los handlers incrementan refreshKey.
   useEffect(() => {
+    if (!obraId) return;
     let cancelled = false;
-    getCronograma().then((data: CronogramaData) => {
-      if (!cancelled) {
+    getCronograma(obraId)
+      .then((data: CronogramaData) => {
+        if (cancelled) return;
         setGroups(data.groups);
+        setTimeline(data.timeline);
+        setError(null);
         setLoading(false);
-      }
-    });
-    return () => { cancelled = true; };
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        setError(e instanceof Error ? e.message : "Error cargando cronograma");
+        setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [obraId, refreshKey]);
+
+  const refresh = useCallback(() => {
+    setLoading(true);
+    setRefreshKey((k) => k + 1);
   }, []);
 
   const allTasks = groups.flatMap((g) => g.items);
@@ -49,43 +76,31 @@ export function ScreenCronograma() {
     setPick(taskId);
   }, []);
 
-  const handleComplete = useCallback((id: string) => {
-    setGroups((prev) =>
-      prev.map((g) => ({
-        ...g,
-        items: g.items.map((t) =>
-          t.id === id ? { ...t, state: "done", pct: 100 } : t
-        ),
-      }))
-    );
-  }, []);
-
-  const handleReopen = useCallback((id: string) => {
-    setGroups((prev) =>
-      prev.map((g) => ({
-        ...g,
-        items: g.items.map((t) =>
-          t.id === id ? { ...t, state: "progress", pct: t.pct || 1 } : t
-        ),
-      }))
-    );
-  }, []);
-
-  const handleCreate = useCallback((task: TaskItem) => {
-    const rubroGroup = groups.find((g) => g.rubro === task.rubro);
-    if (rubroGroup) {
-      setGroups((prev) =>
-        prev.map((g) =>
-          g.rubro === task.rubro ? { ...g, items: [...g.items, task] } : g
-        )
-      );
-    } else {
-      setGroups((prev) => [...prev, { rubro: task.rubro, items: [task] }]);
+  const handleComplete = useCallback(async (id: string) => {
+    try {
+      await completeCronogramaTask(id);
+      refresh();
+    } catch (e) {
+      console.error("Error completando tarea:", e);
     }
-    setNewTaskOpen(false);
-  }, [groups]);
+  }, [refresh]);
 
-  if (loading) {
+  const handleReopen = useCallback(async (id: string) => {
+    try {
+      await reopenCronogramaTask(id);
+      refresh();
+    } catch (e) {
+      console.error("Error reabriendo tarea:", e);
+    }
+  }, [refresh]);
+
+  // La creación la maneja el modal contra POST /tareas; acá solo refrescamos.
+  const handleCreate = useCallback(() => {
+    setNewTaskOpen(false);
+    refresh();
+  }, [refresh]);
+
+  if ((loading && !timeline) || !obraId) {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="flex items-center gap-3 text-slate-400">
@@ -95,6 +110,20 @@ export function ScreenCronograma() {
       </div>
     );
   }
+
+  if (error) {
+    return (
+      <div className="bg-white border border-critical/20 rounded-lg p-8 text-center">
+        <div className="text-[13px] font-bold text-[#B91C1C] mb-1">No se pudo cargar el cronograma</div>
+        <div className="text-[12px] text-slate-500 mb-4">{error}</div>
+        <Button variant="secondary" size="sm" onClick={refresh}>
+          Reintentar
+        </Button>
+      </div>
+    );
+  }
+
+  if (!timeline) return null;
 
   const VIEW_ICONS: Record<ViewMode, typeof ChartBar> = {
     gantt: ChartBar,
@@ -158,9 +187,18 @@ export function ScreenCronograma() {
         </div>
       </div>
 
-      {view === "gantt" && <GanttView groups={groups} onPick={handlePick} />}
-      {view === "list" && <ListView tasks={allTasks} onPick={handlePick} />}
-      {view === "calendar" && <CalendarView tasks={allTasks} onPick={handlePick} />}
+      {totalTasks === 0 ? (
+        <div className="bg-white border border-slate-200 rounded-lg shadow-card p-10 text-center">
+          <div className="text-[14px] font-extrabold text-slate-950 mb-1">Todavía no hay tareas</div>
+          <div className="text-[12px] text-slate-500">Creá la primera tarea para armar el cronograma de la obra.</div>
+        </div>
+      ) : (
+        <>
+          {view === "gantt" && <GanttView groups={groups} timeline={timeline} onPick={handlePick} />}
+          {view === "list" && <ListView tasks={allTasks} onPick={handlePick} />}
+          {view === "calendar" && <CalendarView tasks={allTasks} onPick={handlePick} />}
+        </>
+      )}
 
       <TaskDetail
         taskId={pick}
@@ -172,6 +210,7 @@ export function ScreenCronograma() {
 
       <NuevaTareaModal
         open={newTaskOpen}
+        obraId={obraId}
         onClose={() => setNewTaskOpen(false)}
         onCreate={handleCreate}
       />

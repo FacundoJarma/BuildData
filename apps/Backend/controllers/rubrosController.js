@@ -5,12 +5,21 @@ function formatRubro(row) {
     id: row.id,
     nombre: row.nombre,
     descripcion: row.descripcion,
-    porcentaje_avance: row.porcentaje_avance,
+    // Avance del rubro derivado de sus tareas (promedio simple, sin canceladas).
+    // La columna manual rubros.porcentaje_avance quedó obsoleta y se ignora.
+    porcentaje_avance: parseInt(row.avance_tareas) || 0,
     cap: parseInt(row.cap) || 0,
     spent: parseInt(row.spent) || 0,
     progress: parseInt(row.progress) || 0,
   };
 }
+
+const AVANCE_TAREAS_SQL = `
+  COALESCE((
+    SELECT ROUND(AVG(t.porcentaje_avance))
+    FROM tareas t
+    WHERE t.rubro_id = r.id AND t.estado <> 'cancelada'
+  ), 0)::int AS avance_tareas`;
 
 // GET /obras/:obraId/rubros
 export async function getRubros(req, res) {
@@ -18,6 +27,7 @@ export async function getRubros(req, res) {
   try {
     const result = await pool.query(
       `SELECT r.*, pr.cap, pr.spent,
+        ${AVANCE_TAREAS_SQL},
         CASE WHEN pr.cap > 0 THEN ROUND((pr.spent::numeric / pr.cap) * 100) ELSE 0 END AS progress
        FROM rubros r
        LEFT JOIN presupuesto_rubros pr ON pr.rubro_id = r.id
@@ -52,7 +62,7 @@ export async function crearRubro(req, res) {
       [rubro.rows[0].id, presupuesto]
     );
     await client.query("COMMIT");
-    res.status(201).json(formatRubro({ ...rubro.rows[0], cap: presupuesto, spent: 0, progress: 0 }));
+    res.status(201).json(formatRubro({ ...rubro.rows[0], cap: presupuesto, spent: 0, progress: 0, avance_tareas: 0 }));
   } catch (error) {
     await client.query("ROLLBACK");
     console.error(error);
@@ -61,18 +71,18 @@ export async function crearRubro(req, res) {
 }
 
 // PATCH /obras/:obraId/rubros/:rubroId
+// porcentaje_avance ya no es editable: se deriva de las tareas del rubro.
 export async function updateRubro(req, res) {
   const { rubroId, obraId } = req.params;
-  const { cap, spent, nombre, descripcion, porcentaje_avance } = req.body;
+  const { cap, spent, nombre, descripcion } = req.body;
   try {
     await pool.query(
       `UPDATE rubros SET
         nombre = COALESCE($1, nombre),
         descripcion = COALESCE($2, descripcion),
-        porcentaje_avance = COALESCE($3, porcentaje_avance),
         updated_at = CURRENT_TIMESTAMP
-       WHERE id = $4`,
-      [nombre, descripcion, porcentaje_avance, rubroId]
+       WHERE id = $3`,
+      [nombre, descripcion, rubroId]
     );
 
     if (cap !== undefined || spent !== undefined) {
@@ -95,6 +105,7 @@ export async function updateRubro(req, res) {
 
     const result = await pool.query(
       `SELECT r.*, pr.cap, pr.spent,
+        ${AVANCE_TAREAS_SQL},
         CASE WHEN pr.cap > 0 THEN ROUND((pr.spent::numeric / pr.cap)*100) ELSE 0 END AS progress
        FROM rubros r LEFT JOIN presupuesto_rubros pr ON pr.rubro_id = r.id
        WHERE r.id = $1`, [rubroId]

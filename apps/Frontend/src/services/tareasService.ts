@@ -5,11 +5,17 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 export async function createTask(obraId: string, data: Record<string, string>) {
   const { data: { session } } = await supabase.auth.getSession();
 
-  const payload = {
+  const payload: Record<string, unknown> = {
     obra_id: obraId,
     titulo: data.nombre,
     descripcion: data.desc || "",
     rubro_id: data.rubro_id || null,
+    // fecha_inicio es NOT NULL en la base: default hoy si no viene
+    fecha_inicio: data.fecha_inicio || new Date().toISOString().slice(0, 10),
+    fecha_limite: data.fecha_limite || null,
+    prioridad: data.prioridad || null,
+    asignado_a: data.asignado_a || null,
+    costo_estimado: data.costo_estimado ? Number(data.costo_estimado) : null,
   };
 
   const res = await fetch(`${API_URL}/tareas`, {

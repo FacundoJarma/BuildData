@@ -9,8 +9,9 @@ import type { TaskItem, TaskGroup } from "../data";
 import {
   TASK_STATE_MAP,
   RUBRO_COLORS,
+  FALLBACK_RUBRO_COLOR,
   fmtDateLong,
-  weekDate,
+  parseDate,
 } from "../data";
 
 interface Props {
@@ -27,13 +28,6 @@ const STATE_TONE: Record<string, "success" | "primary" | "critical" | "info"> = 
   late: "critical",
   planned: "info",
 };
-
-const TIMELINE: { label: string; time: string }[] = [
-  { label: "Tarea creada", time: "hace 4 semanas" },
-  { label: "Cambio de estado a En curso", time: "hace 3 semanas" },
-  { label: "Avance reportado: 30%", time: "hace 2 semanas" },
-  { label: "Avance reportado: 62%", time: "hace 5 días" },
-];
 
 export function TaskDetail({ taskId, groups, onClose, onComplete, onReopen }: Props) {
   const task = useMemo<TaskItem | null>(() => {
@@ -59,9 +53,9 @@ export function TaskDetail({ taskId, groups, onClose, onComplete, onReopen }: Pr
   }
 
   const sm = TASK_STATE_MAP[task.state] || TASK_STATE_MAP.planned;
-  const rubroColor = RUBRO_COLORS[task.rubro] || "#94A3B8";
-  const startD = weekDate(task.start);
-  const endD = weekDate(task.start + task.span, -1);
+  const rubroColor = RUBRO_COLORS[task.rubro] || FALLBACK_RUBRO_COLOR;
+  const startD = parseDate(task.startDate);
+  const endD = parseDate(task.dueDate) ?? startD;
   const isLate = task.state === "late";
   const isDone = task.state === "done";
 
@@ -107,7 +101,7 @@ export function TaskDetail({ taskId, groups, onClose, onComplete, onReopen }: Pr
             />
           </div>
 
-          {isLate && (
+          {isLate && endD && (
             <div className="bg-critical-50 border border-[#FECACA] rounded-lg p-3 flex items-start gap-2">
               <ClockArrowRotateLeft width={14} height={14} className="text-[#B91C1C] mt-[2px] flex-none" />
               <div>
@@ -131,23 +125,25 @@ export function TaskDetail({ taskId, groups, onClose, onComplete, onReopen }: Pr
             </div>
           )}
 
-          <div>
-            <div className="text-[10px] tracking-[0.06em] uppercase font-bold text-slate-500 mb-2">Descripción</div>
-            <p className="text-[13px] text-slate-700 leading-relaxed">{task.desc}</p>
-          </div>
+          {task.desc && (
+            <div>
+              <div className="text-[10px] tracking-[0.06em] uppercase font-bold text-slate-500 mb-2">Descripción</div>
+              <p className="text-[13px] text-slate-700 leading-relaxed">{task.desc}</p>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-3">
             <div className="border border-slate-200 rounded-lg p-3">
               <div className="text-[10px] tracking-[0.06em] uppercase font-bold text-slate-500 mb-1">Inicio</div>
-              <div className="text-[13px] font-bold text-slate-950">{fmtDateLong(startD)}</div>
+              <div className="text-[13px] font-bold text-slate-950">{startD ? fmtDateLong(startD) : "—"}</div>
             </div>
             <div className="border border-slate-200 rounded-lg p-3">
               <div className="text-[10px] tracking-[0.06em] uppercase font-bold text-slate-500 mb-1">Fin</div>
-              <div className="text-[13px] font-bold text-slate-950">{fmtDateLong(endD)}</div>
+              <div className="text-[13px] font-bold text-slate-950">{endD ? fmtDateLong(endD) : "—"}</div>
             </div>
             <div className="border border-slate-200 rounded-lg p-3">
               <div className="text-[10px] tracking-[0.06em] uppercase font-bold text-slate-500 mb-1">Duración</div>
-              <div className="text-[13px] font-bold text-slate-950">{task.span} semanas</div>
+              <div className="text-[13px] font-bold text-slate-950">{task.span} {task.span === 1 ? "semana" : "semanas"}</div>
             </div>
             <div className="border border-slate-200 rounded-lg p-3">
               <div className="text-[10px] tracking-[0.06em] uppercase font-bold text-slate-500 mb-1">Costo</div>
@@ -189,21 +185,6 @@ export function TaskDetail({ taskId, groups, onClose, onComplete, onReopen }: Pr
               </div>
             </div>
           )}
-
-          <div>
-            <div className="text-[10px] tracking-[0.06em] uppercase font-bold text-slate-500 mb-2">Actualizaciones recientes</div>
-            <div className="space-y-2">
-              {TIMELINE.map((u, i) => (
-                <div key={i} className="flex items-start gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-slate-300 mt-[6px] flex-none" />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[12px] text-slate-700">{u.label}</div>
-                    <div className="text-[10px] text-slate-400">{u.time}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
 
         <div className="border-t border-slate-200 p-3 flex items-center gap-2 flex-none">

@@ -64,8 +64,8 @@ app.use("/tareas", tareasRoutes);
 // Alertas
 app.use("/alertas", alertasRoutes);
 
-// Rubros
-app.use("/obras", rubrosRoutes);
+// Rubros (el router declara paths completos /obras/:obraId/rubros)
+app.use("/", rubrosRoutes);
 
 // Presupuestos
 app.use("/presupuestos", presupuestosRoutes);

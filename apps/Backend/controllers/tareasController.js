@@ -25,7 +25,12 @@ export async function getTareas(req, res) {
               p.nombre AS usuario_nombre,
               r.nombre AS rubro_nombre,
               pa.nombre AS asignado_a_nombre,
-              pc.nombre AS completada_por_nombre
+              pc.nombre AS completada_por_nombre,
+              COALESCE((
+                SELECT array_agg(td.depende_de ORDER BY td.depende_de)
+                FROM tareas_dependencias td
+                WHERE td.tarea_id = t.id
+              ), '{}') AS dependencias
        FROM tareas t
        LEFT JOIN personas p ON t.usuario_id = p.id
        LEFT JOIN rubros r ON t.rubro_id = r.id
@@ -34,7 +39,7 @@ export async function getTareas(req, res) {
        LEFT JOIN miembros_obra moc ON t.completada_por = moc.id
        LEFT JOIN personas pc ON moc.persona_id = pc.id
        WHERE t.obra_id = $1
-       ORDER BY t.created_at DESC`,
+       ORDER BY t.fecha_inicio ASC, t.created_at ASC`,
       [obra_id]
     );
     res.json(tareas.rows);
@@ -80,6 +85,9 @@ export async function crearTarea(req, res) {
   if (!obra_id || !titulo || !titulo.trim()) {
     return res.status(400).json({ error: "obra_id y titulo son requeridos" });
   }
+  if (!fecha_inicio) {
+    return res.status(400).json({ error: "fecha_inicio es requerida" });
+  }
   if (prioridad && !PRIORIDADES_VALIDAS.includes(prioridad)) {
     return res.status(400).json({ error: `prioridad inválida. Usar: ${PRIORIDADES_VALIDAS.join(", ")}` });
   }
@@ -106,7 +114,7 @@ export async function crearTarea(req, res) {
         rubro_id || null,
         personaId,
         prioridad || null,
-        fecha_inicio || null,
+        fecha_inicio,
         fecha_limite || null,
         miembroObraId,
         costo_estimado || null,
@@ -169,11 +177,12 @@ export async function crearTareaDesdeBot(req, res) {
       }
     }
 
+    // fecha_inicio es NOT NULL: las tareas del bot arrancan hoy por defecto.
     const result = await pool.query(
       `INSERT INTO tareas
          (obra_id, titulo, descripcion, rubro_id, usuario_id, created_by,
-          prioridad, fecha_limite, asignado_a)
-       VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8)
+          prioridad, fecha_inicio, fecha_limite, asignado_a)
+       VALUES ($1, $2, $3, $4, $5, $5, $6, CURRENT_DATE, $7, $8)
        RETURNING *`,
       [
         obra_id,
@@ -196,6 +205,9 @@ export async function crearTareaDesdeBot(req, res) {
 // PATCH /tareas/:id — corregir/actualizar campos de una tarea.
 // No maneja completar la tarea (ver completarTarea) para no permitir
 // que el cliente falsifique completada_por / fecha_completada.
+// Acepta además porcentaje_avance (0-100) y dependencias (array de uuid,
+// replace-all: lo enviado reemplaza el set completo). Si se cambia el estado
+// desde 'completada' a otro valor, se limpian completada_por/fecha_completada.
 export async function actualizarTarea(req, res) {
   const { id } = req.params;
   const {
@@ -208,6 +220,8 @@ export async function actualizarTarea(req, res) {
     fecha_limite,
     asignado_a, // persona_id
     costo_estimado,
+    porcentaje_avance,
+    dependencias, // uuid[] de tareas de las que depende
   } = req.body;
 
   if (estado && !ESTADOS_VALIDOS.includes(estado)) {
@@ -220,6 +234,19 @@ export async function actualizarTarea(req, res) {
   }
   if (prioridad && !PRIORIDADES_VALIDAS.includes(prioridad)) {
     return res.status(400).json({ error: `prioridad inválida. Usar: ${PRIORIDADES_VALIDAS.join(", ")}` });
+  }
+
+  let pct = null;
+  if (porcentaje_avance !== undefined && porcentaje_avance !== null) {
+    pct = Number(porcentaje_avance);
+    if (!Number.isInteger(pct) || pct < 0 || pct > 100) {
+      return res.status(400).json({ error: "porcentaje_avance debe ser un entero entre 0 y 100" });
+    }
+  }
+
+  // dependencias debe ser array de strings (uuids) si viene
+  if (dependencias !== undefined && (!Array.isArray(dependencias) || dependencias.some((d) => typeof d !== "string"))) {
+    return res.status(400).json({ error: "dependencias debe ser un array de ids de tareas" });
   }
 
   try {
@@ -237,33 +264,76 @@ export async function actualizarTarea(req, res) {
     });
     if (errorRef) return res.status(404).json({ error: errorRef });
 
-    const result = await pool.query(
-      `UPDATE tareas
-       SET titulo = COALESCE($1, titulo),
-           descripcion = COALESCE($2, descripcion),
-           rubro_id = COALESCE($3, rubro_id),
-           estado = COALESCE($4, estado),
-           prioridad = COALESCE($5, prioridad),
-           fecha_inicio = COALESCE($6, fecha_inicio),
-           fecha_limite = COALESCE($7, fecha_limite),
-           asignado_a = COALESCE($8, asignado_a),
-           costo_estimado = COALESCE($9, costo_estimado)
-       WHERE id = $10
-       RETURNING *`,
-      [
-        titulo,
-        descripcion,
-        rubro_id,
-        estado,
-        prioridad,
-        fecha_inicio,
-        fecha_limite,
-        miembroObraId,
-        costo_estimado,
-        id,
-      ]
-    );
-    res.json(result.rows[0]);
+    // Validar que las dependencias sean tareas de la misma obra y no generen auto-dependencia
+    if (Array.isArray(dependencias) && dependencias.length > 0) {
+      if (dependencias.includes(id)) {
+        return res.status(400).json({ error: "una tarea no puede depender de sí misma" });
+      }
+      const validas = await pool.query(
+        `SELECT COUNT(*)::int AS n FROM tareas WHERE id = ANY($1::uuid[]) AND obra_id = $2`,
+        [dependencias, obraId]
+      );
+      if (validas.rows[0].n !== dependencias.length) {
+        return res.status(404).json({ error: "alguna dependencia no existe o no pertenece a esta obra" });
+      }
+    }
+
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+
+      // Cambiar el estado fuera de 'completada' implica reabrir: limpiar datos de completado.
+      const reabrir = Boolean(estado);
+
+      const result = await client.query(
+        `UPDATE tareas
+         SET titulo = COALESCE($1, titulo),
+             descripcion = COALESCE($2, descripcion),
+             rubro_id = COALESCE($3, rubro_id),
+             estado = COALESCE($4, estado),
+             prioridad = COALESCE($5, prioridad),
+             fecha_inicio = COALESCE($6, fecha_inicio),
+             fecha_limite = COALESCE($7, fecha_limite),
+             asignado_a = COALESCE($8, asignado_a),
+             costo_estimado = COALESCE($9, costo_estimado),
+             porcentaje_avance = COALESCE($10, porcentaje_avance)
+             ${reabrir ? ", completada_por = NULL, fecha_completada = NULL" : ""}
+         WHERE id = $11
+         RETURNING *`,
+        [
+          titulo,
+          descripcion,
+          rubro_id,
+          estado,
+          prioridad,
+          fecha_inicio,
+          fecha_limite,
+          miembroObraId,
+          costo_estimado,
+          pct,
+          id,
+        ]
+      );
+
+      // Replace-all del set de dependencias (solo si el campo vino en el body)
+      if (Array.isArray(dependencias)) {
+        await client.query(`DELETE FROM tareas_dependencias WHERE tarea_id = $1`, [id]);
+        for (const depId of dependencias) {
+          await client.query(
+            `INSERT INTO tareas_dependencias (tarea_id, depende_de) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+            [id, depId]
+          );
+        }
+      }
+
+      await client.query("COMMIT");
+      res.json(result.rows[0]);
+    } catch (txError) {
+      await client.query("ROLLBACK");
+      throw txError;
+    } finally {
+      client.release();
+    }
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error actualizando tarea" });
@@ -296,7 +366,8 @@ export async function completarTarea(req, res) {
       `UPDATE tareas
        SET estado = 'completada',
            completada_por = $1,
-           fecha_completada = CURRENT_TIMESTAMP
+           fecha_completada = CURRENT_TIMESTAMP,
+           porcentaje_avance = 100
        WHERE id = $2
        RETURNING *`,
       [miembroObraId, id]
@@ -339,7 +410,8 @@ export async function completarTareaDesdeBot(req, res) {
       `UPDATE tareas
        SET estado = 'completada',
            completada_por = $1,
-           fecha_completada = CURRENT_TIMESTAMP
+           fecha_completada = CURRENT_TIMESTAMP,
+           porcentaje_avance = 100
        WHERE id = $2
        RETURNING *`,
       [miembroObraId, id]

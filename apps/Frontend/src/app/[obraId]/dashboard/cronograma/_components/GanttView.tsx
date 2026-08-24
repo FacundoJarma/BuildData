@@ -1,19 +1,20 @@
 "use client";
 
-import { useRef, useState, useEffect, useCallback } from "react";
+import { useRef, useState, useEffect, useCallback, useMemo } from "react";
 import { ChevronRight } from "@gravity-ui/icons";
-import type { TaskGroup } from "../data";
+import type { TaskGroup, Timeline } from "../data";
 import {
   TASK_STATE_MAP,
   RUBRO_COLORS,
-  WEEK_START_IDX,
-  WEEK_COUNT,
-  TODAY_COL,
+  FALLBACK_RUBRO_COLOR,
   weekDate,
+  todayColumn,
+  fmtDate,
 } from "../data";
 
 interface Props {
   groups: TaskGroup[];
+  timeline: Timeline;
   onPick: (taskId: string) => void;
 }
 
@@ -23,41 +24,42 @@ const ZOOMS = [
   { label: "Cómodo", w: 96 },
 ] as const;
 
-function calcMonths() {
-  const months: { label: string; start: number; span: number }[] = [];
-  for (let i = 0; i < WEEK_COUNT; i++) {
-    const d = weekDate(i);
-    const m = d.getMonth();
-    const last = months[months.length - 1];
-    if (last && weekDate(last.start).getMonth() === m) {
-      last.span++;
-    } else {
-      months.push({
-        label: d.toLocaleDateString("es-AR", { month: "long" }),
-        start: i,
-        span: 1,
-      });
-    }
-  }
-  return months;
-}
-
-const MONTHS = calcMonths();
-
-export function GanttView({ groups, onPick }: Props) {
+export function GanttView({ groups, timeline, onPick }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [weekWidth, setWeekWidth] = useState(72);
   const [scrollToToday, setScrollToToday] = useState(false);
 
-  const totalW = WEEK_COUNT * weekWidth + 260;
+  const { ganttStart, weekCount } = timeline;
+  const totalW = weekCount * weekWidth + 260;
+
+  const months = useMemo(() => {
+    const arr: { label: string; start: number; span: number }[] = [];
+    for (let i = 0; i < weekCount; i++) {
+      const d = weekDate(timeline, i);
+      const m = d.getMonth();
+      const last = arr[arr.length - 1];
+      if (last && weekDate(timeline, last.start).getMonth() === m) {
+        last.span++;
+      } else {
+        arr.push({
+          label: d.toLocaleDateString("es-AR", { month: "long" }),
+          start: i,
+          span: 1,
+        });
+      }
+    }
+    return arr;
+  }, [timeline, weekCount]);
+
+  const todayCol = todayColumn(timeline);
 
   useEffect(() => {
     if (scrollToToday && scrollRef.current) {
-      const left = 260 + TODAY_COL * weekWidth - scrollRef.current.clientWidth / 2;
+      const left = 260 + todayCol * weekWidth - scrollRef.current.clientWidth / 2;
       scrollRef.current.scrollLeft = Math.max(0, left);
       setScrollToToday(false);
     }
-  }, [scrollToToday, weekWidth]);
+  }, [scrollToToday, weekWidth, todayCol]);
 
   const doScrollToday = useCallback(() => setScrollToToday(true), []);
 
@@ -92,9 +94,9 @@ export function GanttView({ groups, onPick }: Props) {
       <div ref={scrollRef} className="overflow-x-auto overflow-y-visible" style={{ maxHeight: "calc(100vh - 260px)" }}>
         <div style={{ width: totalW, minWidth: totalW }}>
           <div className="flex" style={{ paddingLeft: 260 }}>
-            {MONTHS.map((m) => (
+            {months.map((m) => (
               <div
-                key={m.label}
+                key={`${m.start}-${m.label}`}
                 className="text-[10px] font-bold text-slate-400 tracking-[0.06em] uppercase px-2 py-1.5 border-b border-slate-100"
                 style={{ width: m.span * weekWidth, minWidth: m.span * weekWidth }}
               >
@@ -104,13 +106,14 @@ export function GanttView({ groups, onPick }: Props) {
           </div>
 
           <div className="flex border-b border-slate-200 bg-slate-50" style={{ paddingLeft: 260 }}>
-            {Array.from({ length: WEEK_COUNT }, (_, i) => (
+            {Array.from({ length: weekCount }, (_, i) => (
               <div
                 key={i}
-                className="text-[10px] font-bold text-slate-500 text-center py-1 border-r border-slate-100 last:border-r-0"
+                className="text-[10px] font-bold text-slate-500 text-center py-1 border-r border-slate-100 last:border-r-0 tnum"
                 style={{ width: weekWidth, minWidth: weekWidth }}
+                title={ganttStart.toLocaleDateString("es-AR", { day: "numeric", month: "long", year: "numeric" })}
               >
-                S{WEEK_START_IDX + i}
+                {fmtDate(weekDate(timeline, i))}
               </div>
             ))}
           </div>
@@ -125,7 +128,7 @@ export function GanttView({ groups, onPick }: Props) {
                   >
                     <span
                       className="w-2 h-2 rounded-full flex-none"
-                      style={{ background: RUBRO_COLORS[g.rubro] || "#94A3B8" }}
+                      style={{ background: RUBRO_COLORS[g.rubro] || FALLBACK_RUBRO_COLOR }}
                     />
                     <span className="text-[12px] font-bold text-slate-700 truncate">{g.rubro}</span>
                   </div>
@@ -168,7 +171,7 @@ export function GanttView({ groups, onPick }: Props) {
 
             <div
               className="absolute top-0 bottom-0 w-[2px] bg-critical pointer-events-none z-20"
-              style={{ left: 260 + TODAY_COL * weekWidth }}
+              style={{ left: 260 + todayCol * weekWidth }}
             >
               <div className="w-2 h-2 rounded-full bg-critical -ml-[3px] -mt-[3px]" />
             </div>

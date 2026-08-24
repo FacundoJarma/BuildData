@@ -115,13 +115,18 @@ const pedidosConItems = await Promise.all(
       [obraId]
     );
 
-    // Trade progress
+    // Trade progress — avance calculado desde las tareas del rubro
+    // (promedio simple de porcentaje_avance, excluyendo canceladas).
     const tradeResult = await pool.query(
       `SELECT r.id, r.nombre AS name,
-        CASE WHEN pr.cap > 0 THEN ROUND((pr.spent::numeric / pr.cap) * 100) ELSE 0 END AS pct
+        COALESCE((
+          SELECT ROUND(AVG(t.porcentaje_avance))
+          FROM tareas t
+          WHERE t.rubro_id = r.id AND t.estado <> 'cancelada'
+        ), 0)::int AS pct
        FROM rubros r
-       JOIN presupuesto_rubros pr ON pr.rubro_id = r.id
-       WHERE r.obra_id = $1`,
+       WHERE r.obra_id = $1
+       ORDER BY r.nombre ASC`,
       [obraId]
     );
 

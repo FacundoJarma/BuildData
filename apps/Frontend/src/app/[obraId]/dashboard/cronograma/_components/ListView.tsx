@@ -3,7 +3,13 @@
 import type { TaskItem } from "../data";
 import { DPill } from "@/components/ui/DPill";
 import { DAvatar } from "@/components/ui/DAvatar";
-import { fmtDate, RUBRO_COLORS, TASK_STATE_MAP, weekDate } from "../data";
+import {
+  fmtDate,
+  parseDate,
+  RUBRO_COLORS,
+  FALLBACK_RUBRO_COLOR,
+  TASK_STATE_MAP,
+} from "../data";
 
 interface Props {
   tasks: TaskItem[];
@@ -42,8 +48,8 @@ export function ListView({ tasks, onPick }: Props) {
         <tbody>
           {tasks.map((t) => {
             const sm = TASK_STATE_MAP[t.state] || TASK_STATE_MAP.planned;
-            const startD = weekDate(t.start);
-            const endD = weekDate(t.start + t.span, -1);
+            const startD = parseDate(t.startDate);
+            const endD = parseDate(t.dueDate) ?? startD;
             return (
               <tr
                 key={t.id}
@@ -63,7 +69,7 @@ export function ListView({ tasks, onPick }: Props) {
                   <span className="text-[12px] text-slate-600 flex items-center gap-1.5">
                     <span
                       className="w-1.5 h-1.5 rounded-full flex-none"
-                      style={{ background: RUBRO_COLORS[t.rubro] || "#94A3B8" }}
+                      style={{ background: RUBRO_COLORS[t.rubro] || FALLBACK_RUBRO_COLOR }}
                     />
                     {t.rubro}
                   </span>
@@ -71,11 +77,11 @@ export function ListView({ tasks, onPick }: Props) {
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
                     <DAvatar initials={t.who.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2)} size={24} />
-                    <span className="text-[12px] text-slate-700">{t.who}</span>
+                    <span className="text-[12px] text-slate-700 truncate max-w-[110px]">{t.who}</span>
                   </div>
                 </td>
-                <td className="px-4 py-3 text-[12px] text-slate-600 tnum">{fmtDate(startD)}</td>
-                <td className="px-4 py-3 text-[12px] text-slate-600 tnum">{fmtDate(endD)}</td>
+                <td className="px-4 py-3 text-[12px] text-slate-600 tnum">{startD ? fmtDate(startD) : "—"}</td>
+                <td className="px-4 py-3 text-[12px] text-slate-600 tnum">{endD ? fmtDate(endD) : "—"}</td>
                 <td className="px-4 py-3">
                   <DPill tone={STATE_TONE[t.state] || "slate"}>{sm.label}</DPill>
                 </td>
