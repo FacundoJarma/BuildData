@@ -1,16 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
 import { Plus, Smartphone } from "@gravity-ui/icons";
 import { DPageHeader } from "../../_components/DPageHeader";
 import { DCard } from "@/components/ui/DCard";
 import { DAvatar } from "@/components/ui/DAvatar";
 import { DPill } from "@/components/ui/DPill";
 import Button from "@/components/ui/Button";
-import { getEquipo, type EquipoData } from "@/services/mock/equipoService";
+import { getEquipo, type EquipoData } from "@/services/equipoService";
 import { InviteTeamModal } from "./InviteTeamModal";
 
 export function ScreenEquipo() {
+  const { obraId } = useParams<{ obraId: string }>();
   const [data, setData] = useState<EquipoData | null>(null);
   const [loading, setLoading] = useState(true);
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -18,14 +20,14 @@ export function ScreenEquipo() {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    getEquipo().then((d) => {
+    getEquipo(obraId).then((d) => {
       if (!cancelled) {
         setData(d);
         setLoading(false);
       }
     });
     return () => { cancelled = true; };
-  }, []);
+  }, [obraId]);
 
   if (loading) {
     return (
