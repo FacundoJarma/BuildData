@@ -6,6 +6,7 @@ import { DashTopBar } from "@/app/[obraId]/dashboard/_components/DashTopBar";
 import { DashboardDataProvider, useDashboardData } from "@/app/[obraId]/dashboard/_components/DashboardDataContext";
 import { QuickAddProvider } from "@/app/[obraId]/dashboard/_components/QuickAddContext";
 import { QuickAddModal } from "@/app/[obraId]/dashboard/_components/QuickAddModal";
+import { NuevaTareaModal } from "@/app/[obraId]/dashboard/cronograma/_components/NuevaTareaModal";
 import { useToast, DashToast } from "@/app/[obraId]/dashboard/_components/useToast";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
@@ -34,7 +35,7 @@ export default function DashboardLayout({
 function LayoutInner({ children, obraId }: { children: ReactNode; obraId: string }) {
   const [quickAdd, setQuickAdd] = useState<string | null>(null);
   const [toast, flash] = useToast();
-  const { setObraInfo } = useDashboardData();
+  const { setObraInfo, refreshDashboard } = useDashboardData();
 
   useEffect(() => {
     setObraInfo(obraId, "", 0);
@@ -52,7 +53,16 @@ function LayoutInner({ children, obraId }: { children: ReactNode; obraId: string
         </div>
       </div>
 
-      <QuickAddModal kind={quickAdd} obraId={obraId} onClose={() => setQuickAdd(null)} onDone={flash} />
+      {quickAdd === "tarea" ? (
+        <NuevaTareaModal
+          open
+          obraId={obraId}
+          onClose={() => setQuickAdd(null)}
+          onCreate={() => { setQuickAdd(null); refreshDashboard().catch(() => {}); }}
+        />
+      ) : (
+        <QuickAddModal kind={quickAdd} obraId={obraId} onClose={() => setQuickAdd(null)} onDone={flash} />
+      )}
       <DashToast msg={toast} />
     </>
   );

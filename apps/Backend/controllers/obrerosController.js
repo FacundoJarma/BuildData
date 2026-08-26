@@ -5,7 +5,7 @@ export async function getObreros(req, res) {
   const { obra_id } = req.params;
   try {
     const result = await pool.query(
-      `SELECT p.id, p.nombre, p.telefono, mo.rol, mo.joined_at
+      `SELECT p.id, p.nombre, p.telefono, p.auth_user_id, mo.rol, mo.joined_at
        FROM personas p
        JOIN miembros_obra mo ON p.id = mo.persona_id
        WHERE mo.obra_id = $1

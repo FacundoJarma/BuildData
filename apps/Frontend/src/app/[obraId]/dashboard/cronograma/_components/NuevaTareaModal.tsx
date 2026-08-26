@@ -128,37 +128,6 @@ export function NuevaTareaModal({ open, obraId, onClose, onCreate }: Props) {
     onClose();
   };
   if (!open) return null;
-
-  if (successName) {
-    return (
-      <div onClick={closeAfterSuccess} className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-fade-task">
-        <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-[440px] rounded-2xl shadow-big p-8 flex flex-col items-center gap-5 animate-modal-pop">
-          <div className="w-14 h-14 rounded-full bg-success-50 flex items-center justify-center">
-            <Check width={24} height={24} className="text-[#15803D]" />
-          </div>
-          <div className="text-center">
-            <div className="text-[16px] font-extrabold text-slate-950">Tarea creada</div>
-            <div className="text-[13px] text-slate-500 mt-1">{successName} fue agregada al cronograma.</div>
-          </div>
-          <div className="flex gap-2 w-full">
-            <button
-              onClick={() => { setSuccessName(null); resetForm(); }}
-              className="flex-1 text-[12px] font-bold rounded-md px-4 py-[9px] bg-primary hover:bg-primary-700 text-white transition-colors"
-            >
-              Crear otra
-            </button>
-            <button
-              onClick={closeAfterSuccess}
-              className="flex-1 text-[12px] font-bold rounded-md px-4 py-[9px] border border-slate-200 text-slate-600 hover:text-slate-950 transition-colors"
-            >
-              Cerrar
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div onClick={onClose} className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-fade-task">
       <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-[560px] max-h-[calc(100vh-48px)] rounded-2xl shadow-big overflow-hidden flex flex-col animate-modal-pop">
